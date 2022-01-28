@@ -2,7 +2,7 @@
   "name": "operation-mad-duck",
   "version": "1.0.0",
   "description": "a Cloudflare Workers program for OMD",
-  "main": "index.js",
+  "main": "worker.js",
   "devDependencies": {
     "miniflare": "^2.2.0"
   },
