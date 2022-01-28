@@ -5,118 +5,179 @@ const html = todos => `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Operation Mad Duck</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css" rel="stylesheet"></link>
-  </head>
-<!--
-  <body class="bg-green-100">
-    <div class="w-full h-full flex content-center justify-center mt-8">
-      <div class="bg-white shadow-md rounded px-8 pt-6 py-8 mb-4">
-        <h1 class="block text-grey-800 text-md font-bold mb-2">Todos</h1>
-        <div class="flex">
-          <input class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-800 leading-tight focus:outline-none focus:shadow-outline" type="text" name="name" placeholder="A new todo"></input>
-          <button class="bg-blue-500 hover:bg-blue-800 text-white font-bold ml-2 py-2 px-4 rounded focus:outline-none focus:shadow-outline" id="create" type="submit">Create</button>
-        </div>
-        <div class="mt-4" id="todos"></div>
-      </div>
-    </div>
-  </body>
-  -->
+    <style>
+    body {
+        margin: 0;
+        font-family: system-ui;
+        background-color: #F5F5F7;
+        color: #1d1d1f;
+        height: 100%;
+        overflow:hidden
+    }
+    
+    h1, h2 {
+        color: #1d1d1f;
+        text-align:center;
+        background-color: white;
+        padding: 18px;
+        border-radius: 18px;
+    }
 
-  <body class="bg-blue-100">
-    <div class="w-full h-full flex content-center justify-center mt-8">
-      <div class="bg-white shadow-md rounded px-8 pt-6 py-8 mb-4">
-        <h1 class="block text-grey-800 text-lg text-center font-bold mb-2">Operation Mad Duck</h1>
-        <div class="flex flex-col">
-  <div class="overflow-x-auto sm:-mx-6 lg:-mx-8 ">
-    <div class="py-4 inline-block min-w-full sm:px-6 lg:px-8">
-      <div class="overflow-hidden">
-        <table class="min-w-full border">
-          <thead class="border-b bg-gray-50">
+    table {
+        color: #1d1d1f;
+        background-color: white;
+        padding: 18px;
+        margin: 18px;
+        border-radius: 18px;
+        min-width: 90%;
+        font-size: larger;
+        
+    }
+
+    th, td {
+        padding: 2%;
+    }
+
+    table, th, td {
+        border: 2px solid #F5F5F7;
+        background-color: white;
+        border-collapse: collapse;
+    }
+    
+    a {
+        color: white;
+        text-decoration:none
+    }
+    
+    a:hover {
+        text-decoration:underline
+    }
+    
+    .container {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap:wrap
+    }
+    
+    .subcontainer {
+        width: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align:center;
+    }
+
+    .red {
+        color: red;
+    }
+
+    .green {
+        color: green;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        body {
+            background-color: #141414;
+            color:#f6f5f7
+        }
+    
+        h1 {
+            color:#141414
+        }
+    }    
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+        <div class="subcontainer">
+        <h1>Operation Mad Duck</h1>
+        <table>
+          <thead>
             <tr>
-              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4">
+              <th>
                 Flag
               </th>
-              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4">
+              <th>
                 Red Team
               </th>
-              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4">
+              <th>
                 Blue Team
               </th>
             </tr>
-          </thead class="border-b">
-          <tbody class="text-center">
-            <tr class="bg-white border-b">
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">1</td>
-              <td class="text-sm text-red-500 px-6 py-4 whitespace-nowrap">
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td class="red">
                 1155
               </td>
-              <td class="text-sm text-green-500 px-6 py-4 whitespace-nowrap">
+              <td class="green">
                 1147
               </td>
-            </tr class="bg-white border-b">
-            <tr class="bg-white border-b">
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">2</td>
-              <td class="text-sm text-slate-500 px-6 py-4 whitespace-nowrap">
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="red">
                 -
               </td>
-              <td class="text-sm text-green-500 px-6 py-4 whitespace-nowrap">
+              <td class="green">
                 1153
               </td>
             </tr>
-            <tr class="bg-white border-b">
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">3</td>
-              <td class="text-sm text-green-500 px-6 py-4 whitespace-nowrap">
+            <tr>
+              <td>3</td>
+              <td class="green">
                 1202
               </td>
-              <td class="text-sm text-red-500 px-6 py-4 whitespace-nowrap">
+              <td class="red">
                 1230
               </td>
             </tr>
-            <tr class="bg-white border-b">
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">4</td>
-              <td class="text-sm text-green-500 px-6 py-4 whitespace-nowrap">
+            <tr>
+              <td>4</td>
+              <td class="green">
                 1215
               </td>
-              <td class="text-sm text-red-500 px-6 py-4 whitespace-nowrap">
+              <td class="red">
                 1246
               </td>
             </tr>
-            <tr class="bg-white border-b">
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">5</td>
-              <td class="text-sm text-slate-500 px-6 py-4 whitespace-nowrap">
+            <tr>
+              <td>5</td>
+              <td class="red">
                 -
               </td>
-              <td class="text-sm text-green-500 px-6 py-4 whitespace-nowrap">
+              <td class="green">
                 1300
               </td>
             </tr>
-            <tr class="bg-white border-b">
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">6</td>
-              <td class="text-sm text-green-500 px-6 py-4 whitespace-nowrap">
+            <tr>
+              <td>6</td>
+              <td class="green">
                 1305
               </td>
-              <td class="text-sm text-red-500 px-6 py-4 whitespace-nowrap">
+              <td class="red">
                 1327
               </td>
             </tr>
-            <tr class="bg-white border-b">
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">7</td>
-              <td class="text-sm text-green-500 px-6 py-4 whitespace-nowrap">
+            <tr>
+              <td>7</td>
+              <td class="green">
                 1309
               </td>
-              <td class="text-sm text-slate-500 px-6 py-4 whitespace-nowrap">
+              <td class="red">
                 -
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
-</div>
-        <div class="mt-4" id="todos"></div>
-      </div>
-    </div>
+     <div id="todos"></div>
+     </div>
   </body>
 
   <script>
@@ -173,7 +234,7 @@ const html = todos => `
       }
     }
 
-    document.querySelector("#create").addEventListener('click', createTodo)
+    //document.querySelector("#create").addEventListener('click', createTodo)
   </script>
 </html>
 `
