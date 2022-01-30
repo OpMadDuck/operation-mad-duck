@@ -1,10 +1,10 @@
-const html = todos => `
+const scoreBoard = flags => `
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck</title>
+    <title>Operation Mad Duck | Score Board</title>
     <style>
     body {
         margin: 0;
@@ -99,7 +99,7 @@ const html = todos => `
           <thead>
             <tr>
               <th>
-                Flag
+                Flag #
               </th>
               <th>
                 Red Team
@@ -109,7 +109,7 @@ const html = todos => `
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id='scoreBoard'>
             <tr>
               <td>1</td>
               <td class="red">
@@ -117,60 +117,6 @@ const html = todos => `
               </td>
               <td class="green">
                 1147
-              </td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td class="red">
-                -
-              </td>
-              <td class="green">
-                1153
-              </td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td class="green">
-                1202
-              </td>
-              <td class="red">
-                1230
-              </td>
-            </tr>
-            <tr>
-              <td>4</td>
-              <td class="green">
-                1215
-              </td>
-              <td class="red">
-                1246
-              </td>
-            </tr>
-            <tr>
-              <td>5</td>
-              <td class="red">
-                -
-              </td>
-              <td class="green">
-                1300
-              </td>
-            </tr>
-            <tr>
-              <td>6</td>
-              <td class="green">
-                1305
-              </td>
-              <td class="red">
-                1327
-              </td>
-            </tr>
-            <tr>
-              <td>7</td>
-              <td class="green">
-                1309
-              </td>
-              <td class="red">
-                -
               </td>
             </tr>
           </tbody>
@@ -181,65 +127,36 @@ const html = todos => `
   </body>
 
   <script>
-    window.todos = ${todos}
+    window.flags = ${flags}
 
-    var updateTodos = function() {
-      fetch("/", { method: 'PUT', body: JSON.stringify({ todos: window.todos }) })
-      populateTodos()
-    }
+    var populateFlags = function() {
+      var scoreBoard = document.querySelector("#scoreBoard")
+      scoreBoard.innerHTML = null
 
-    var completeTodo = function(evt) {
-      var checkbox = evt.target
-      var todoElement = checkbox.parentNode
-      var newTodoSet = [].concat(window.todos)
-      var todo = newTodoSet.find(t => t.id == todoElement.dataset.todo)
-      todo.completed = !todo.completed
-      window.todos = newTodoSet
-      updateTodos()
-    }
+      window.flags.forEach((flag, index) => {
+        var row = document.createElement("tr")
+        var flagIndex = document.createElement("td")
+        var redTeam = document.createElement("td")
+        var blueTeam = document.createElement("td")
 
-    var populateTodos = function() {
-      var todoContainer = document.querySelector("#todos")
-      todoContainer.innerHTML = null
+        flagIndex.innerHTML = index + 1
+        redTeam.innerHTML = flag.red
+        blueTeam.innerHTML = flag.blue
 
-      window.todos.forEach(todo => {
-        var el = document.createElement("div")
-        el.className = "border-t py-4"
-        el.dataset.todo = todo.id
-
-        var name = document.createElement("span")
-        name.className = todo.completed ? "line-through" : ""
-        name.textContent = todo.name
-
-        var checkbox = document.createElement("input")
-        checkbox.className = "mx-4"
-        checkbox.type = "checkbox"
-        checkbox.checked = todo.completed ? 1 : 0
-        checkbox.addEventListener('click', completeTodo)
-
-        el.appendChild(checkbox)
-        el.appendChild(name)
-        todoContainer.appendChild(el)
+        row.appendChild(flagIndex)
+        row.appendChild(redTeam)
+        row.appendChild(blueTeam)
+        scoreBoard.appendChild(row)
       })
     }
 
-    populateTodos()
+    populateFlags()
 
-    var createTodo = function() {
-      var input = document.querySelector("input[name=name]")
-      if (input.value.length) {
-        window.todos = [].concat(todos, { id: window.todos.length + 1, name: input.value, completed: false })
-        input.value = ""
-        updateTodos()
-      }
-    }
-
-    //document.querySelector("#create").addEventListener('click', createTodo)
   </script>
 </html>
 `
 
-const htmlFlag = todos => `
+const flag = todos => `
 <!DOCTYPE html>
 <html>
   <head>
@@ -325,65 +242,103 @@ const htmlFlag = todos => `
     </div>
   </body>
 
+  <script>
+  window.flags = ${flags}
+
+  var populateFlags = function() {
+    var scoreBoard = document.querySelector("#scoreBoard")
+    scoreBoard.innerHTML = null
+
+    window.flags.forEach((flag, index) => {
+      var row = document.createElement("tr")
+      var flagIndex = document.createElement("td")
+      var redTeam = document.createElement("td")
+      var blueTeam = document.createElement("td")
+
+      flagIndex.innerHTML = index + 1
+      redTeam.innerHTML = flag.red
+      blueTeam.innerHTML = flag.blue
+
+      row.appendChild(flagIndex)
+      row.appendChild(redTeam)
+      row.appendChild(blueTeam)
+      scoreBoard.appendChild(row)
+    })
+  }
+
+  populateFlags()
+
+  </script>
+
 </html>
 `
 
-const defaultData = { todos: [] }
+const defaultData = {
+  flags: [
+    // { red: 1155, blue: 1147 },
+    // { red: null, blue: 1153 },
+    // { red: 1202, blue: 1230 },
+    // { red: 1215, blue: 1246 },
+    // { red: null, blue: 1300 },
+    // { red: 1305, blue: 1327 },
+    // { red: 1309, blue: null }
+  ]
+}
 
 const setCache = data => FLAGS.put("data", data)
 const getCache = () => FLAGS.get("data")
 
-async function getTodos(request) {
-    let data
-    const cache = await getCache()
-    if (!cache) {
-        await setCache(JSON.stringify(defaultData))
-        data = defaultData
-    } else {
-        data = JSON.parse(cache)
-    }
-    const body = html(JSON.stringify(data.todos || []).replace(/</g, "\\u003c"))
-    return new Response(body, {
-        headers: { 'Content-Type': 'text/html' },
-    })
+async function getScoreBoard(request) {
+  let data
+  const cache = await getCache()
+  if (!cache) {
+    await setCache(JSON.stringify(defaultData))
+    data = defaultData
+  } else {
+    data = JSON.parse(cache)
+  }
+  const body = scoreBoard(JSON.stringify(data.flags))
+  return new Response(body, {
+    headers: { 'Content-Type': 'text/html' },
+  })
 }
 
 async function getFlag(number) {
-    let data
-    const cache = await getCache()
-    if (!cache) {
-        await setCache(JSON.stringify(defaultData))
-        data = defaultData
-    } else {
-        data = JSON.parse(cache)
-    }
-    const body = htmlFlag(JSON.stringify(data.todos || []).replace(/</g, "\\u003c"))
-    return new Response(body, {
-        headers: { 'Content-Type': 'text/html' },
-    })
+  let data
+  const cache = await getCache()
+  if (!cache) {
+    await setCache(JSON.stringify(defaultData))
+    data = defaultData
+  } else {
+    data = JSON.parse(cache)
+  }
+  const body = flag(JSON.stringify(data.todos || []).replace(/</g, "\\u003c"))
+  return new Response(body, {
+    headers: { 'Content-Type': 'text/html' },
+  })
 }
 
-async function updateTodos(request) {
-    const body = await request.text()
-    try {
-        JSON.parse(body)
-        await setCache(body)
-        return new Response(body, { status: 200 })
-    } catch (err) {
-        return new Response(err, { status: 500 })
-    }
+async function captureFlag(request) {
+  const body = await request.text()
+  try {
+    JSON.parse(body)
+    await setCache(body)
+    return new Response(body, { status: 200 })
+  } catch (err) {
+    return new Response(err, { status: 500 })
+  }
 }
 
 async function handleRequest(request) {
-    if (request.method === 'PUT') {
-        return updateTodos(request)
-    } else if (request.url.includes("flag1")) {
-        return getFlag(1)
-    } else {
-        return getTodos(request)
-    }
+  if (request.method === 'PUT') {
+    return captureFlag(request)
+  } else if (request.url.includes("flag1")) {
+    return getFlag(1)
+  } else {
+    return getScoreBoard(request)
+  }
 }
 
 addEventListener('fetch', event => {
-    event.respondWith(handleRequest(event.request))
+  event.respondWith(handleRequest(event.request))
 })
