@@ -134,7 +134,7 @@ const scoreBoard = flags => `
     }
 
     var resetScoreBoard = function() {
-      if (confirm("The scoreboard will be reset. This action cannot be undone. Are you sure you wish to proceed?") == true) {
+      if (confirm("The scoreboard will be reset. This action cannot be undone. Are you sure you wish to proceed?")) {
         var data = [
           { red: null, blue: null },
           { red: null, blue: null },
@@ -145,7 +145,7 @@ const scoreBoard = flags => `
           { red: null, blue: null }
         ]
         fetch("/", { method: "PUT", body: JSON.stringify({ flags: data }) })
-        location.reload()
+        setTimeout(() => { location.reload() }, 1000)
       }
     }
 
