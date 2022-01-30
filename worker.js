@@ -123,8 +123,8 @@ const scoreBoard = flags => `
         var blueTeam = document.createElement("td")
 
         flagIndex.innerHTML = index + 1
-        redTeam.innerHTML = flag.red
-        blueTeam.innerHTML = flag.blue
+        redTeam.innerHTML = flag.red.time + ": " + flag.red.contract
+        blueTeam.innerHTML = flag.blue.time + ": " + flag.blue.contract
 
         row.appendChild(flagIndex)
         row.appendChild(redTeam)
@@ -136,13 +136,13 @@ const scoreBoard = flags => `
     var resetScoreBoard = function() {
       if (confirm("The scoreboard will be reset. This action cannot be undone. Are you sure you wish to proceed?")) {
         var data = [
-          { red: null, blue: null },
-          { red: null, blue: null },
-          { red: null, blue: null },
-          { red: null, blue: null },
-          { red: null, blue: null },
-          { red: null, blue: null },
-          { red: null, blue: null }
+          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { red: { time: null, contract: null }, blue: { time: null, contract: null } }
         ]
         fetch("/", { method: "PUT", body: JSON.stringify({ flags: data }) })
         setTimeout(() => { location.reload() }, 1000)
@@ -240,32 +240,33 @@ const flag = (flags, number) => `
     window.flags = ${flags}
     window.number = ${number}
 
-    var updateFlags = function() {
+    var updateFlags = function(team, contract) {
+      let time = (new Date).toTimeString().split(" ")[0]
+      if (team === "Red") {
+        window.flags[window.number - 1].red.time = time
+        window.flags[window.number - 1].red.contract = contract
+      } else if (team === "Blue") {
+        window.flags[window.number - 1].blue.time = time
+        window.flags[window.number - 1].blue.contract = contract
+      }
+
       fetch("/", { method: "PUT", body: JSON.stringify({ flags: window.flags }) })
+      .then(function(response) {
+        if (!response.ok) {
+          alert("HTTP Error " + response.status + ". Please try again.");
+        } else {
+          alert(team + " Team captured Flag #${number} at " + time);
+        }
+      })
     }
 
-    var alertUser = function(time, team) {
-      alert(team + " captured Flag #${number} at " + time);
+    var requestContract = function(team) {
+      let contract = prompt("Please enter " + team + " Team's contract:");
+      updateFlags(team, contract)
     }
 
-    var redCapture = function(event) {
-      let now = new Date()
-      let nowReadable = now.toTimeString().split(" ")[0]
-      window.flags[window.number - 1].red = nowReadable
-      updateFlags()
-      alertUser(nowReadable, "Red Team")
-    }
-
-    var blueCapture = function(event) {
-      let now = new Date()
-      let nowReadable = now.toTimeString().split(" ")[0]
-      window.flags[window.number - 1].blue = nowReadable
-      updateFlags()
-      alertUser(nowReadable, "Blue Team")
-    }
-
-    document.querySelector(".red").addEventListener("click", redCapture)
-    document.querySelector(".blue").addEventListener("click", blueCapture)
+    document.querySelector(".red").addEventListener("click", (event) => {requestContract("Red")})
+    document.querySelector(".blue").addEventListener("click", (event) => {requestContract("Blue")})
   </script>
 
 </html>
@@ -273,13 +274,13 @@ const flag = (flags, number) => `
 
 const defaultData = {
   flags: [
-    { red: null, blue: null },
-    { red: null, blue: null },
-    { red: null, blue: null },
-    { red: null, blue: null },
-    { red: null, blue: null },
-    { red: null, blue: null },
-    { red: null, blue: null }
+    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { red: { time: null, contract: null }, blue: { time: null, contract: null } }
   ]
 }
 
