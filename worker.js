@@ -124,11 +124,11 @@ const scoreBoard = flags => `
 
         flagIndex.innerHTML = index + 1
         if (flag.red.time && flag.red.contract) {
-          redTeam.innerHTML = flag.red.time + ": " + flag.red.contract
+          redTeam.innerHTML = flag.red.time + " " + flag.red.contract
         }
         
         if (flag.blue.time && flag.blue.contract) {
-          blueTeam.innerHTML = flag.blue.time + ": " + flag.blue.contract
+          blueTeam.innerHTML = flag.blue.time + " " + flag.blue.contract
         }
 
         row.appendChild(flagIndex)
