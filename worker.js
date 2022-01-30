@@ -12,7 +12,6 @@ const scoreBoard = flags => `
         background-color: #F5F5F7;
         color: #1d1d1f;
         height: 100%;
-        overflow:hidden
     }
     
     h1, h2, h3 {
@@ -23,25 +22,26 @@ const scoreBoard = flags => `
         border-radius: 18px;
     }
 
+
+    table, th, td {
+      border: 2px solid #F5F5F7;
+      background-color: white;
+      border-collapse: collapse;
+    }
+
     table {
         color: #1d1d1f;
         background-color: white;
         padding: 18px;
         margin: 18px;
         border-radius: 18px;
-        min-width: 90%;
         font-size: larger;
-        
+        text-align: left;
+        width: 95%;
     }
 
     th, td {
         padding: 2%;
-    }
-
-    table, th, td {
-        border: 2px solid #F5F5F7;
-        background-color: white;
-        border-collapse: collapse;
     }
     
     .container {
@@ -81,27 +81,18 @@ const scoreBoard = flags => `
         <table>
           <thead>
             <tr>
-              <th>
-                Flag #
+              <th style="width:12vw">
+                Flag
               </th>
-              <th>
+              <th style="width:20vw">
                 Red Team
               </th>
-              <th>
+              <th style="width:20vw">
                 Blue Team
               </th>
             </tr>
           </thead>
           <tbody id='scoreBoard'>
-            <tr>
-              <td>1</td>
-              <td class="red">
-                1155
-              </td>
-              <td class="green">
-                1147
-              </td>
-            </tr>
           </tbody>
         </table>
         <h3 id="reset">Reset Scoreboard</h3>
@@ -116,13 +107,14 @@ const scoreBoard = flags => `
       var scoreBoard = document.querySelector("#scoreBoard")
       scoreBoard.innerHTML = null
 
-      window.flags.forEach((flag, index) => {
+      window.flags.forEach((flag) => {
         var row = document.createElement("tr")
         var flagIndex = document.createElement("td")
         var redTeam = document.createElement("td")
         var blueTeam = document.createElement("td")
 
-        flagIndex.innerHTML = index + 1
+        flagIndex.innerHTML = flag.name
+
         if (flag.red.time && flag.red.contract) {
           redTeam.innerHTML = flag.red.time + " " + flag.red.contract
         }
@@ -141,13 +133,23 @@ const scoreBoard = flags => `
     var resetScoreBoard = function() {
       if (confirm("The scoreboard will be reset. This action cannot be undone. Are you sure you wish to proceed?")) {
         var data = [
-          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-          { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-          { red: { time: null, contract: null }, blue: { time: null, contract: null } }
+          { name: 'Broncos', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Buccaneers', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Chargers', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Chiefs', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Cowboys', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Dolphins', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Giants', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Jaguars', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Jets', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Patriots', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Redskins', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Saints', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Seahawks', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Texans', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Thai', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Track | Blake', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Track | Triangle', red: { time: null, contract: null }, blue: { time: null, contract: null } }
         ]
         fetch("/", { method: "PUT", body: JSON.stringify({ flags: data }) })
         setTimeout(() => { location.reload() }, 1000)
@@ -162,13 +164,13 @@ const scoreBoard = flags => `
 </html>
 `
 
-const flag = (flags, number) => `
+const flag = (flags, number, name) => `
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | Flag #${number}</title>
+    <title>Operation Mad Duck | ${name} Flag</title>
     <style>
     body {
         margin: 0;
@@ -234,7 +236,7 @@ const flag = (flags, number) => `
   <body>
     <div class="container">
         <div class="subcontainer">
-            <h1>Capture Flag #${number}</h1>
+            <h1>${name} Flag</h1>
             <h2 class="blue">Blue Team</h2>
             <h2 class="red">Red Team</h2>
         </div>
@@ -260,7 +262,7 @@ const flag = (flags, number) => `
         if (!response.ok) {
           alert("HTTP Error " + response.status + ". Please try again.");
         } else {
-          alert(team + " Team captured Flag #${number} at " + time);
+          alert(team + " Team captured ${name} Flag at " + time);
         }
       })
     }
@@ -279,13 +281,23 @@ const flag = (flags, number) => `
 
 const defaultData = {
   flags: [
-    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { red: { time: null, contract: null }, blue: { time: null, contract: null } }
+    { name: 'Broncos', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Buccaneers', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Chargers', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Chiefs', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Cowboys', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Dolphins', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Giants', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Jaguars', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Jets', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Patriots', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Redskins', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Saints', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Seahawks', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Texans', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Thai', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Track | Blake', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+    { name: 'Track | Triangle', red: { time: null, contract: null }, blue: { time: null, contract: null } }
   ]
 }
 
@@ -316,7 +328,7 @@ async function getFlag(number) {
   } else {
     data = JSON.parse(cache)
   }
-  const body = flag(JSON.stringify(data.flags || []), number)
+  const body = flag(JSON.stringify(data.flags || []), number, data.flags[number - 1]["name"])
   return new Response(body, {
     headers: { 'Content-Type': 'text/html' },
   })
@@ -339,7 +351,7 @@ async function handleRequest(request) {
   } else if (request.url.includes("flag")) {
     const { searchParams } = new URL(request.url)
     let id = searchParams.get('id')
-    if (id >= 1 && id <= 7) {
+    if (id >= 1 && id <= 17) {
       return getFlag(id)
     } else {
       return getScoreBoard(request)
