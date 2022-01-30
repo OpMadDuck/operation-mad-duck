@@ -123,8 +123,13 @@ const scoreBoard = flags => `
         var blueTeam = document.createElement("td")
 
         flagIndex.innerHTML = index + 1
-        redTeam.innerHTML = flag.red.time + ": " + flag.red.contract
-        blueTeam.innerHTML = flag.blue.time + ": " + flag.blue.contract
+        if (flag.red.time && flag.red.contract) {
+          redTeam.innerHTML = flag.red.time + ": " + flag.red.contract
+        }
+        
+        if (flag.blue.time && flag.blue.contract) {
+          blueTeam.innerHTML = flag.blue.time + ": " + flag.blue.contract
+        }
 
         row.appendChild(flagIndex)
         row.appendChild(redTeam)
