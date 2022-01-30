@@ -134,17 +134,19 @@ const scoreBoard = flags => `
     }
 
     var resetScoreBoard = function() {
-      var data = [
-        { red: null, blue: null },
-        { red: null, blue: null },
-        { red: null, blue: null },
-        { red: null, blue: null },
-        { red: null, blue: null },
-        { red: null, blue: null },
-        { red: null, blue: null }
-      ]
-      fetch("/", { method: "PUT", body: JSON.stringify({ flags: data }) })
-      location.reload()
+      if (confirm("The scoreboard will be reset. This action cannot be undone. Are you sure you wish to proceed?") == true) {
+        var data = [
+          { red: null, blue: null },
+          { red: null, blue: null },
+          { red: null, blue: null },
+          { red: null, blue: null },
+          { red: null, blue: null },
+          { red: null, blue: null },
+          { red: null, blue: null }
+        ]
+        fetch("/", { method: "PUT", body: JSON.stringify({ flags: data }) })
+        location.reload()
+      }
     }
 
     populateFlags()
@@ -249,7 +251,7 @@ const flag = (flags, number) => `
     var redCapture = function(event) {
       let now = new Date()
       let nowReadable = now.toTimeString().split(" ")[0]
-      window.flags[window.number].red = nowReadable
+      window.flags[window.number - 1].red = nowReadable
       updateFlags()
       alertUser(nowReadable, "Red Team")
     }
@@ -257,7 +259,7 @@ const flag = (flags, number) => `
     var blueCapture = function(event) {
       let now = new Date()
       let nowReadable = now.toTimeString().split(" ")[0]
-      window.flags[window.number].blue = nowReadable
+      window.flags[window.number - 1].blue = nowReadable
       updateFlags()
       alertUser(nowReadable, "Blue Team")
     }
@@ -331,7 +333,11 @@ async function handleRequest(request) {
   } else if (request.url.includes("flag")) {
     const { searchParams } = new URL(request.url)
     let id = searchParams.get('id')
-    return getFlag(id)
+    if (id >= 1 && id <= 7) {
+      return getFlag(id)
+    } else {
+      return getScoreBoard(request)
+    }
   } else {
     return getScoreBoard(request)
   }
