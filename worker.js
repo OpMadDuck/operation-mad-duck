@@ -15,7 +15,7 @@ const scoreBoard = flags => `
         overflow:hidden
     }
     
-    h1, h2 {
+    h1, h2, h3 {
         color: #1d1d1f;
         text-align:center;
         background-color: white;
@@ -44,15 +44,6 @@ const scoreBoard = flags => `
         border-collapse: collapse;
     }
     
-    a {
-        color: white;
-        text-decoration:none
-    }
-    
-    a:hover {
-        text-decoration:underline
-    }
-    
     .container {
         height: 100vh;
         display: flex;
@@ -68,14 +59,6 @@ const scoreBoard = flags => `
         align-items: center;
         justify-content: center;
         text-align:center;
-    }
-
-    .red {
-        color: red;
-    }
-
-    .green {
-        color: green;
     }
     
     @media (prefers-color-scheme: dark) {
@@ -93,7 +76,7 @@ const scoreBoard = flags => `
 
   <body>
     <div class="container">
-        <div class="subcontainer">
+      <div class="subcontainer">
         <h1>Operation Mad Duck</h1>
         <table>
           <thead>
@@ -121,8 +104,8 @@ const scoreBoard = flags => `
             </tr>
           </tbody>
         </table>
+        <h3 id="reset">Reset Scoreboard</h3>
       </div>
-     <div id="todos"></div>
      </div>
   </body>
 
@@ -150,19 +133,35 @@ const scoreBoard = flags => `
       })
     }
 
+    var resetScoreBoard = function() {
+      var data = [
+        { red: null, blue: null },
+        { red: null, blue: null },
+        { red: null, blue: null },
+        { red: null, blue: null },
+        { red: null, blue: null },
+        { red: null, blue: null },
+        { red: null, blue: null }
+      ]
+      fetch("/", { method: "PUT", body: JSON.stringify({ flags: data }) })
+      location.reload()
+    }
+
     populateFlags()
+
+    document.querySelector("#reset").addEventListener("click", resetScoreBoard)
 
   </script>
 </html>
 `
 
-const flag = todos => `
+const flag = (flags, number) => `
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | Flag 1</title>
+    <title>Operation Mad Duck | Flag #${number}</title>
     <style>
     body {
         margin: 0;
@@ -185,15 +184,6 @@ const flag = todos => `
         margin-bottom: 25%;
     }
     
-    a {
-        color: white;
-        text-decoration:none
-    }
-    
-    a:hover {
-        text-decoration:underline
-    }
-    
     .container {
         height: 100vh;
         display: flex;
@@ -212,11 +202,13 @@ const flag = todos => `
     }
 
     .red {
-        background-color: red;
+      color: white;
+      background-color: red;
     }
 
     .blue {
-        background-color: blue;
+      color: white;
+      background-color: blue;
     }
     
     @media (prefers-color-scheme: dark) {
@@ -235,39 +227,43 @@ const flag = todos => `
   <body>
     <div class="container">
         <div class="subcontainer">
-            <h1>Capture Flag #1</h1>
-            <h2 class="blue"><a href='#blue'>Blue Team</a></h2>
-            <h2 class="red"><a href='#red'>Red Team</a></h2>
+            <h1>Capture Flag #${number}</h1>
+            <h2 class="blue">Blue Team</h2>
+            <h2 class="red">Red Team</h2>
         </div>
     </div>
   </body>
 
   <script>
-  window.flags = ${flags}
+    window.flags = ${flags}
+    window.number = ${number}
 
-  var populateFlags = function() {
-    var scoreBoard = document.querySelector("#scoreBoard")
-    scoreBoard.innerHTML = null
+    var updateFlags = function() {
+      fetch("/", { method: "PUT", body: JSON.stringify({ flags: window.flags }) })
+    }
 
-    window.flags.forEach((flag, index) => {
-      var row = document.createElement("tr")
-      var flagIndex = document.createElement("td")
-      var redTeam = document.createElement("td")
-      var blueTeam = document.createElement("td")
+    var alertUser = function(time, team) {
+      alert(team + " captured Flag #${number} at " + time);
+    }
 
-      flagIndex.innerHTML = index + 1
-      redTeam.innerHTML = flag.red
-      blueTeam.innerHTML = flag.blue
+    var redCapture = function(event) {
+      let now = new Date()
+      let nowReadable = now.toTimeString().split(" ")[0]
+      window.flags[window.number].red = nowReadable
+      updateFlags()
+      alertUser(nowReadable, "Red Team")
+    }
 
-      row.appendChild(flagIndex)
-      row.appendChild(redTeam)
-      row.appendChild(blueTeam)
-      scoreBoard.appendChild(row)
-    })
-  }
+    var blueCapture = function(event) {
+      let now = new Date()
+      let nowReadable = now.toTimeString().split(" ")[0]
+      window.flags[window.number].blue = nowReadable
+      updateFlags()
+      alertUser(nowReadable, "Blue Team")
+    }
 
-  populateFlags()
-
+    document.querySelector(".red").addEventListener("click", redCapture)
+    document.querySelector(".blue").addEventListener("click", blueCapture)
   </script>
 
 </html>
@@ -275,13 +271,13 @@ const flag = todos => `
 
 const defaultData = {
   flags: [
-    // { red: 1155, blue: 1147 },
-    // { red: null, blue: 1153 },
-    // { red: 1202, blue: 1230 },
-    // { red: 1215, blue: 1246 },
-    // { red: null, blue: 1300 },
-    // { red: 1305, blue: 1327 },
-    // { red: 1309, blue: null }
+    { red: null, blue: null },
+    { red: null, blue: null },
+    { red: null, blue: null },
+    { red: null, blue: null },
+    { red: null, blue: null },
+    { red: null, blue: null },
+    { red: null, blue: null }
   ]
 }
 
@@ -297,7 +293,7 @@ async function getScoreBoard(request) {
   } else {
     data = JSON.parse(cache)
   }
-  const body = scoreBoard(JSON.stringify(data.flags))
+  const body = scoreBoard(JSON.stringify(data.flags || []))
   return new Response(body, {
     headers: { 'Content-Type': 'text/html' },
   })
@@ -312,7 +308,7 @@ async function getFlag(number) {
   } else {
     data = JSON.parse(cache)
   }
-  const body = flag(JSON.stringify(data.todos || []).replace(/</g, "\\u003c"))
+  const body = flag(JSON.stringify(data.flags || []), number)
   return new Response(body, {
     headers: { 'Content-Type': 'text/html' },
   })
@@ -332,8 +328,10 @@ async function captureFlag(request) {
 async function handleRequest(request) {
   if (request.method === 'PUT') {
     return captureFlag(request)
-  } else if (request.url.includes("flag1")) {
-    return getFlag(1)
+  } else if (request.url.includes("flag")) {
+    const { searchParams } = new URL(request.url)
+    let id = searchParams.get('id')
+    return getFlag(id)
   } else {
     return getScoreBoard(request)
   }
