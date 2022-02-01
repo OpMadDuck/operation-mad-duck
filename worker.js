@@ -168,16 +168,18 @@ const scoreBoard = (flags) => `
           { name: 'Saints', red: { time: null, contract: null }, blue: { time: null, contract: null } },
           { name: 'Seahawks', red: { time: null, contract: null }, blue: { time: null, contract: null } },
           { name: 'Texans', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-          { name: 'Thai', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Titans', red: { time: null, contract: null }, blue: { time: null, contract: null } },
           { name: 'Track | Blake', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-          { name: 'Track | Triangle', red: { time: null, contract: null }, blue: { time: null, contract: null } }
+          { name: 'Track | Triangle', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Vikings', red: { time: null, contract: null }, blue: { time: null, contract: null } },
+          { name: 'Washington', red: { time: null, contract: null }, blue: { time: null, contract: null } }
         ]
         fetch("/", { method: "PUT", body: JSON.stringify({ flags: data }) })
         .then(function(response) {
           if (response.ok) {
             location.reload()
           } else {
-            alert("Could not reset the scoreboard. Please try again")
+            alert("An error occurred. Please try again")
           }
         })
       }
@@ -385,7 +387,7 @@ const defaultData = {
       blue: { time: null, contract: null },
     },
     {
-      name: "Thai",
+      name: "Titans",
       red: { time: null, contract: null },
       blue: { time: null, contract: null },
     },
@@ -399,6 +401,16 @@ const defaultData = {
       red: { time: null, contract: null },
       blue: { time: null, contract: null },
     },
+    {
+      name: "Vikings",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Washington",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    }
   ],
 };
 
@@ -456,7 +468,7 @@ async function handleRequest(request) {
   } else if (request.url.includes("flag")) {
     const { searchParams } = new URL(request.url);
     let id = searchParams.get("id");
-    if (id >= 1 && id <= 17) {
+    if (id >= 1 && id <= defaultData.flags.length) {
       return getFlag(id);
     } else {
       return getScoreBoard(request);
