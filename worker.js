@@ -1,75 +1,94 @@
-const scoreBoard = flags => `
+const scoreBoard = (flags) => `
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Operation Mad Duck | Score Board</title>
     <style>
     body {
-        margin: 0;
-        font-family: system-ui;
-        background-color: #F5F5F7;
-        color: #1d1d1f;
-        height: 100%;
+      margin: 0;
+      font-family: system-ui;
+      background-color: #F5F5F7;
+      color: #1d1d1f;
+      height: 100%;
     }
     
     h1, h2, h3 {
-        color: #1d1d1f;
-        text-align:center;
-        background-color: white;
-        padding: 18px;
-        border-radius: 18px;
+      color: #1d1d1f;
+      text-align:center;
+      background-color: white;
+      padding: 18px;
+      border-radius: 18px;
     }
 
-
     table, th, td {
-      border: 2px solid #F5F5F7;
       background-color: white;
       border-collapse: collapse;
     }
 
     table {
-        color: #1d1d1f;
-        background-color: white;
-        padding: 18px;
-        margin: 18px;
-        border-radius: 18px;
-        font-size: larger;
-        text-align: left;
-        width: 95%;
+      color: #1d1d1f;
+      padding: 18px;
+      margin: 18px;
+      border: 2px solid #F5F5F7;
+      border-radius: 18px;
+      font-size: large;
+      text-align: left;
+      width: 90%;
     }
 
     th, td {
-        padding: 2%;
+      padding: 2%;
+      border: 2px solid #F5F5F7;
     }
     
+    th:first-of-type {
+      border-top-left-radius: 18px;
+    }
+
+    th:last-of-type {
+      border-top-right-radius: 18px;
+    }
+
+    tr:last-of-type td:first-of-type {
+      border-bottom-left-radius: 18px;
+    }
+
+    tr:last-of-type td:last-of-type {
+      border-bottom-right-radius: 18px;
+    }
+
     .container {
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap:wrap
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap:wrap
     }
     
     .subcontainer {
-        width: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align:center;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align:center;
     }
     
     @media (prefers-color-scheme: dark) {
-        body {
-            background-color: #141414;
-            color:#f6f5f7
-        }
-    
-        h1 {
-            color:#141414
-        }
+      body {
+        background-color: #141414;
+        color:#f6f5f7
+      }
+  
+      h1 {
+        color:#141414
+      }
+
+      table, th, td {
+        border: 2px solid #141414;
+      }
     }    
     </style>
   </head>
@@ -81,13 +100,13 @@ const scoreBoard = flags => `
         <table>
           <thead>
             <tr>
-              <th style="width:12vw">
+              <th style="width:25%">
                 Flag
               </th>
-              <th style="width:20vw">
+              <th style="width:37.5%">
                 Red Team
               </th>
-              <th style="width:20vw">
+              <th style="width:37.5%">
                 Blue Team
               </th>
             </tr>
@@ -95,7 +114,7 @@ const scoreBoard = flags => `
           <tbody id='scoreBoard'>
           </tbody>
         </table>
-        <h3 id="reset">Reset Scoreboard</h3>
+        <h2 id="reset">Reset Scoreboard</h3>
       </div>
      </div>
   </body>
@@ -152,7 +171,13 @@ const scoreBoard = flags => `
           { name: 'Track | Triangle', red: { time: null, contract: null }, blue: { time: null, contract: null } }
         ]
         fetch("/", { method: "PUT", body: JSON.stringify({ flags: data }) })
-        setTimeout(() => { location.reload() }, 1000)
+        .then(function(response) {
+          if (response.ok) {
+            location.reload()
+          } else {
+            alert("Could not reset the scoreboard. Please try again")
+          }
+        })
       }
     }
 
@@ -162,73 +187,75 @@ const scoreBoard = flags => `
 
   </script>
 </html>
-`
+`;
 
 const flag = (flags, number, name) => `
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Operation Mad Duck | ${name} Flag</title>
     <style>
     body {
-        margin: 0;
-        font-family: system-ui;
-        background-color: #F5F5F7;
-        color: #1d1d1f;
-        height: 100%;
-        overflow:hidden
+      margin: 0;
+      font-family: system-ui;
+      background-color: #F5F5F7;
+      color: #1d1d1f;
+      height: 100%;
+      overflow:hidden
     }
     
     h1, h2 {
-        color: #1d1d1f;
-        text-align:center;
-        background-color: white;
-        padding: 18px;
-        border-radius: 18px;
+      color: #1d1d1f;
+      text-align:center;
+      background-color: white;
+      padding: 18px;
+      border-radius: 18px;
     }
 
-    h1 {
-        margin-bottom: 25%;
-    }
-    
     .container {
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap:wrap
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap:wrap
     }
     
     .subcontainer {
-        width: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align:center;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align:center;
     }
 
     .red {
       color: white;
       background-color: red;
+      margin: 20% 0%;
     }
 
     .blue {
       color: white;
       background-color: blue;
+      margin: 20% 0%;
+    }
+
+    .buttons {
+      margin: 20% 0%;
     }
     
     @media (prefers-color-scheme: dark) {
-        body {
-            background-color: #141414;
-            color:#f6f5f7
-        }
-    
-        h1 {
-            color:#141414
-        }
+      body {
+        background-color: #141414;
+        color:#f6f5f7
+      }
+  
+      h1 {
+        color:#141414
+      }
     }    
     </style>
   </head>
@@ -237,8 +264,10 @@ const flag = (flags, number, name) => `
     <div class="container">
         <div class="subcontainer">
             <h1>${name} Flag</h1>
-            <h2 class="blue">Blue Team</h2>
-            <h2 class="red">Red Team</h2>
+            <div class="buttons">
+              <h2 class="blue">Blue Team</h2>
+              <h2 class="red">Red Team</h2>
+            </div>
         </div>
     </div>
   </body>
@@ -257,14 +286,16 @@ const flag = (flags, number, name) => `
         window.flags[window.number - 1].blue.contract = contract
       }
 
-      fetch("/", { method: "PUT", body: JSON.stringify({ flags: window.flags }) })
-      .then(function(response) {
-        if (!response.ok) {
-          alert("HTTP Error " + response.status + ". Please try again.");
-        } else {
-          alert(team + " Team captured ${name} Flag at " + time);
-        }
-      })
+      if (contract) {
+        fetch("/", { method: "PUT", body: JSON.stringify({ flags: window.flags }) })
+        .then(function(response) {
+          if (!response.ok) {
+            alert("HTTP Error " + response.status + ". Please try again.");
+          } else {
+            alert(team + " Team captured ${name} Flag at " + time);
+          }
+        })
+      }
     }
 
     var requestContract = function(team) {
@@ -277,90 +308,162 @@ const flag = (flags, number, name) => `
   </script>
 
 </html>
-`
+`;
 
 const defaultData = {
   flags: [
-    { name: 'Broncos', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Buccaneers', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Chargers', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Chiefs', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Cowboys', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Dolphins', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Giants', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Jaguars', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Jets', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Patriots', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Redskins', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Saints', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Seahawks', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Texans', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Thai', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Track | Blake', red: { time: null, contract: null }, blue: { time: null, contract: null } },
-    { name: 'Track | Triangle', red: { time: null, contract: null }, blue: { time: null, contract: null } }
-  ]
-}
+    {
+      name: "Broncos",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Buccaneers",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Chargers",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Chiefs",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Cowboys",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Dolphins",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Giants",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Jaguars",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Jets",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Patriots",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Redskins",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Saints",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Seahawks",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Texans",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Thai",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Track | Blake",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+    {
+      name: "Track | Triangle",
+      red: { time: null, contract: null },
+      blue: { time: null, contract: null },
+    },
+  ],
+};
 
-const setCache = data => FLAGS.put("data", data)
-const getCache = () => FLAGS.get("data")
+const setCache = (data) => FLAGS.put("data", data);
+const getCache = () => FLAGS.get("data");
 
 async function getScoreBoard(request) {
-  let data
-  const cache = await getCache()
+  let data;
+  const cache = await getCache();
   if (!cache) {
-    await setCache(JSON.stringify(defaultData))
-    data = defaultData
+    await setCache(JSON.stringify(defaultData));
+    data = defaultData;
   } else {
-    data = JSON.parse(cache)
+    data = JSON.parse(cache);
   }
-  const body = scoreBoard(JSON.stringify(data.flags || []))
+  const body = scoreBoard(JSON.stringify(data.flags || []));
   return new Response(body, {
-    headers: { 'Content-Type': 'text/html' },
-  })
+    headers: { "Content-Type": "text/html" },
+  });
 }
 
 async function getFlag(number) {
-  let data
-  const cache = await getCache()
+  let data;
+  const cache = await getCache();
   if (!cache) {
-    await setCache(JSON.stringify(defaultData))
-    data = defaultData
+    await setCache(JSON.stringify(defaultData));
+    data = defaultData;
   } else {
-    data = JSON.parse(cache)
+    data = JSON.parse(cache);
   }
-  const body = flag(JSON.stringify(data.flags || []), number, data.flags[number - 1]["name"])
+  const body = flag(
+    JSON.stringify(data.flags || []),
+    number,
+    data.flags[number - 1]["name"]
+  );
   return new Response(body, {
-    headers: { 'Content-Type': 'text/html' },
-  })
+    headers: { "Content-Type": "text/html" },
+  });
 }
 
 async function captureFlag(request) {
-  const body = await request.text()
+  const body = await request.text();
   try {
-    JSON.parse(body)
-    await setCache(body)
-    return new Response(body, { status: 200 })
+    JSON.parse(body);
+    await setCache(body);
+    return new Response(body, { status: 200 });
   } catch (err) {
-    return new Response(err, { status: 500 })
+    return new Response(err, { status: 500 });
   }
 }
 
 async function handleRequest(request) {
-  if (request.method === 'PUT') {
-    return captureFlag(request)
+  if (request.method === "PUT") {
+    return captureFlag(request);
   } else if (request.url.includes("flag")) {
-    const { searchParams } = new URL(request.url)
-    let id = searchParams.get('id')
+    const { searchParams } = new URL(request.url);
+    let id = searchParams.get("id");
     if (id >= 1 && id <= 17) {
-      return getFlag(id)
+      return getFlag(id);
     } else {
-      return getScoreBoard(request)
+      return getScoreBoard(request);
     }
   } else {
-    return getScoreBoard(request)
+    return getScoreBoard(request);
   }
 }
 
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
+addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event.request));
+});
