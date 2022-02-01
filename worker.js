@@ -33,14 +33,15 @@ const scoreBoard = (flags) => `
       margin: 18px;
       border: 2px solid #F5F5F7;
       border-radius: 18px;
-      font-size: large;
       text-align: left;
-      width: 90%;
+      width: 100%;
     }
 
     th, td {
-      padding: 2%;
+      padding: 1.5%;
       border: 2px solid #F5F5F7;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     th:first-of-type {
@@ -68,7 +69,8 @@ const scoreBoard = (flags) => `
     }
     
     .subcontainer {
-      width: 100%;
+      min-width: 50%;
+      max-width: 90%;
       display: flex;
       flex-direction: column;
       align-items: center;
