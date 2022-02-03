@@ -145,7 +145,7 @@ const scoreBoard = (data) => `
 
     var resetScoreBoard = function() {
       if (confirm("The scoreboard will be reset. This action cannot be undone. Are you sure you wish to proceed?")) {
-        fetch("/", { method: "PUT", body: JSON.stringify([]) })
+        fetch("/", { method: "POST", body: "" })
         .then(function(response) {
           if (response.ok) {
             location.reload()
@@ -263,28 +263,29 @@ const flag = (name) => `
 const getData = () => FLAGS.get("data");
 const setData = (data) => FLAGS.put("data", data);
 
-const defaultData = [
-  {
-    flag: "Broncos",
-    time: "10:12:33",
-    contract: "RED GLAMOR BRONCOS"
-  }
-]
-
 const FLAGNAMES = ["Broncos", "Buccaneers", "Chargers", 
 "Chiefs", "Cowboys", "Dolphins", "Giants", "Jaguars", 
 "Jets", "Patriots", "Redskins", "Saints", "Seahawks", 
 "Texans", "Titans", "Track | Blake", "Track | Triangle", 
 "Vikings", "Washington"]
 
+async function resetScoreBoard() {
+  console.log("Resetting Score Board...")
+  try {
+    let data = []
+    await setData(data)
+    return new Response(body, { status: 200 });
+  } catch (err) {
+    return new Response(err, { status: 500 });
+  }
+}
+
 async function getScoreBoard(_request) {
-  let data;
-  const cache = await getData();
-  if (!cache) {
-    await setData(JSON.stringify(defaultData));
-    data = defaultData;
+  var data = await getData();
+  if (!data) {
+    await setData("[]")
   } else {
-    data = JSON.parse(cache);
+    JSON.parse(data);
   }
   const body = scoreBoard(JSON.stringify(data || []));
   return new Response(body, {
@@ -303,8 +304,9 @@ async function captureFlag(request) {
   const body = await request.text();
   console.log(body)
   try {
-    console.log(JSON.parse(body))
-    await setCache(body);
+    var data = await getData();
+    JSON.parse(data)
+    await setData(data.append(JSON.parse(body)));
     return new Response(body, { status: 200 });
   } catch (err) {
     return new Response(err, { status: 500 });
@@ -314,6 +316,8 @@ async function captureFlag(request) {
 async function handleRequest(request) {
   if (request.method === "PUT") {
     return captureFlag(request);
+  } else if (request.method === "POST") {
+    return resetScoreBoard()
   } else if (request.url.includes("flag")) {
     const { searchParams } = new URL(request.url);
     let id = searchParams.get("id");
