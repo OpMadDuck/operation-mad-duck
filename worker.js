@@ -1,4 +1,4 @@
-const scoreBoard = (flags) => `
+const scoreBoard = (data) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -14,7 +14,7 @@ const scoreBoard = (flags) => `
       height: 100%;
     }
     
-    h1, h2, h3 {
+    h1, h2 {
       color: #1d1d1f;
       text-align:center;
       background-color: white;
@@ -116,28 +116,25 @@ const scoreBoard = (flags) => `
           <tbody id='scoreBoard'>
           </tbody>
         </table>
-        <h2 id="reset">Reset Scoreboard</h3>
+        <h2>Reset Scoreboard</h2>
       </div>
      </div>
   </body>
 
   <script>
-    window.flags = ${flags}
-
     var populateFlags = function() {
       var scoreBoard = document.querySelector("#scoreBoard")
-      scoreBoard.innerHTML = null
-
-      window.flags.forEach((flag) => {
+      const data = ${data}
+      data.forEach((entry) => {
         var row = document.createElement("tr")
 
         var flag = document.createElement("td")
         var time = document.createElement("td")
         var contract = document.createElement("td")
 
-        flag.innerHTML = flag.name
-        time.innerHTML = flag.time 
-        contract.innerHTML = flag.contract
+        flag.innerHTML = entry.flag
+        time.innerHTML = entry.time 
+        contract.innerHTML = entry.contract
 
         row.appendChild(flag)
         row.appendChild(time)
@@ -148,7 +145,7 @@ const scoreBoard = (flags) => `
 
     var resetScoreBoard = function() {
       if (confirm("The scoreboard will be reset. This action cannot be undone. Are you sure you wish to proceed?")) {
-        fetch("/", { method: "PUT", body: JSON.stringify({}) })
+        fetch("/", { method: "PUT", body: JSON.stringify([]) })
         .then(function(response) {
           if (response.ok) {
             location.reload()
@@ -161,13 +158,12 @@ const scoreBoard = (flags) => `
 
     populateFlags()
 
-    document.querySelector("#reset").addEventListener("click", resetScoreBoard)
-
+    document.querySelector("h2").addEventListener("click", resetScoreBoard)
   </script>
 </html>
 `;
 
-const flag = (name, number) => `
+const flag = (name) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -238,22 +234,16 @@ const flag = (name, number) => `
   </body>
 
   <script>
-
-    var flag = {
-      name: "${name}"
-    }
-
     var captureFlag = (contract) => {
       let time = (new Date).toTimeString().split(" ")[0]
-      flag["capture"] = {time: time, contract: contract}
 
       if (contract) {
-        fetch("/", { method: "PUT", body: JSON.stringify(flag) })
+        fetch("/", { method: "PUT", body: JSON.stringify({flag: "${name}", time: time, contract: contract}) })
         .then(function(response) {
           if (!response.ok) {
             alert("HTTP Error " + response.status + ". Please try again.");
           } else {
-            alert(team + " Team captured ${name} Flag at " + time);
+            alert("Successfully captured the name Flag at " + time);
           }
         })
       }
@@ -270,17 +260,16 @@ const flag = (name, number) => `
 </html>
 `;
 
-const setCache = (data) => FLAGS.put("data", data);
-const getCache = () => FLAGS.get("data");
+const getData = () => FLAGS.get("data");
+const setData = (data) => FLAGS.put("data", data);
 
-const defaultData = {
-  flags: [
-    {
-      name: "Broncos",
-      contract: "RED GLAMOR BRONCOS"
-    }
-  ]
-}
+const defaultData = [
+  {
+    flag: "Broncos",
+    time: "10:12:33",
+    contract: "RED GLAMOR BRONCOS"
+  }
+]
 
 const FLAGNAMES = ["Broncos", "Buccaneers", "Chargers", 
 "Chiefs", "Cowboys", "Dolphins", "Giants", "Jaguars", 
@@ -290,29 +279,21 @@ const FLAGNAMES = ["Broncos", "Buccaneers", "Chargers",
 
 async function getScoreBoard(_request) {
   let data;
-  const cache = await getCache();
+  const cache = await getData();
   if (!cache) {
-    await setCache(JSON.stringify(defaultData));
+    await setData(JSON.stringify(defaultData));
     data = defaultData;
   } else {
     data = JSON.parse(cache);
   }
-  const body = scoreBoard(JSON.stringify(data.flags || []));
+  const body = scoreBoard(JSON.stringify(data || []));
   return new Response(body, {
     headers: { "Content-Type": "text/html" },
   });
 }
 
 async function getFlag(number) {
-  let data;
-  const cache = await getCache();
-  if (!cache) {
-    await setCache(JSON.stringify(defaultData));
-    data = defaultData;
-  } else {
-    data = JSON.parse(cache);
-  }
-  const body = flag(FLAGNAMES[number], number);
+  const body = flag(FLAGNAMES[number]);
   return new Response(body, {
     headers: { "Content-Type": "text/html" },
   });
@@ -320,8 +301,9 @@ async function getFlag(number) {
 
 async function captureFlag(request) {
   const body = await request.text();
+  console.log(body)
   try {
-    JSON.parse(body);
+    console.log(JSON.parse(body))
     await setCache(body);
     return new Response(body, { status: 200 });
   } catch (err) {
@@ -335,7 +317,7 @@ async function handleRequest(request) {
   } else if (request.url.includes("flag")) {
     const { searchParams } = new URL(request.url);
     let id = searchParams.get("id");
-    if (id >= 1 && id <= defaultData.flags.length) {
+    if (id >= 1 && id <= FLAGNAMES.length) {
       return getFlag(id);
     } else {
       return getScoreBoard(request);

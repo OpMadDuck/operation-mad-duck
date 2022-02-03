@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "miniflare --kv FLAGS -w"
+    "run": "miniflare --kv FLAGS --watch --verbose"
   },
   "repository": {
     "type": "git",
