@@ -1,82 +1,83 @@
 const style = `
 <style>
 body {
-  margin: 0;
-  font-family: system-ui;
   background-color: #F5F5F7;
   color: #1d1d1f;
+  font-family: system-ui;
   height: 100%;
+  margin: 0;
 }
-h1, h2 {
-  color: #1d1d1f;
-  text-align:center;
+
+h1 {
   background-color: white;
-  padding: 18px;
   border-radius: 18px;
+  color: black;
+  padding: 18px;
+  text-align: center;
 }
+
 h2 {
-  color: white;
   background-color: green;
-}
-table, th, td {
-  background-color: white;
-  border-collapse: collapse;
-}
-table {
-  color: #1d1d1f;
-  padding: 18px;
-  margin: 18px;
-  border: 2px solid #F5F5F7;
   border-radius: 18px;
-  text-align: left;
-  width: 100%;
+  color: white;
+  padding: 18px;
+  text-align: center;
 }
+
+table {
+  background-color: white;
+  border: 2px solid gray;
+  border-collapse: collapse;
+  border-radius: 18px;
+  color: black;
+  margin: 18px;
+  min-width: 100%;
+  padding: 18px;
+  text-align: left;
+}
+
 th, td {
-  padding: 1.5%;
+  background-color: white;
   border: 2px solid #F5F5F7;
+  border-collapse: collapse;
   overflow: hidden;
+  padding: 1.5%;
   text-overflow: ellipsis;
 }
+
 th:first-of-type {
-  border-top-left-radius: 18px;
+border-top-left-radius: 18px;
 }
+
 th:last-of-type {
-  border-top-right-radius: 18px;
+border-top-right-radius: 18px;
 }
+
 tr:last-of-type td:first-of-type {
-  border-bottom-left-radius: 18px;
+border-bottom-left-radius: 18px;
 }
+
 tr:last-of-type td:last-of-type {
-  border-bottom-right-radius: 18px;
+border-bottom-right-radius: 18px;
 }
+
 .container {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
   height: 100%;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  flex-wrap:wrap
 }
+
 .subcontainer {
-  min-width: 50%;
-  max-width: 90%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align:center;
+align-items: center;
+display: flex;
+flex-direction: column;
+justify-content: center;
+max-width: 90%;
+min-width: 50%;
+text-align:center;
 }
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #141414;
-    color: #f6f5f7;
-  }
-  h1 {
-    color: #141414;
-  }
-  table, th, td {
-    border: 2px solid #141414;
-  }
-}    
 </style>
 `;
 
