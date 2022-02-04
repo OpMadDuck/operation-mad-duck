@@ -26,7 +26,6 @@ h2 {
 
 table {
   background-color: white;
-  border: 2px solid gray;
   border-collapse: collapse;
   border-radius: 18px;
   color: black;
@@ -41,24 +40,24 @@ th, td {
   border: 2px solid #F5F5F7;
   border-collapse: collapse;
   overflow: hidden;
-  padding: 1.5%;
+  padding: 7px;
   text-overflow: ellipsis;
 }
 
 th:first-of-type {
-border-top-left-radius: 18px;
+  border-top-left-radius: 18px;
 }
 
 th:last-of-type {
-border-top-right-radius: 18px;
+  border-top-right-radius: 18px;
 }
 
 tr:last-of-type td:first-of-type {
-border-bottom-left-radius: 18px;
+  border-bottom-left-radius: 18px;
 }
 
 tr:last-of-type td:last-of-type {
-border-bottom-right-radius: 18px;
+  border-bottom-right-radius: 18px;
 }
 
 .container {
@@ -70,13 +69,13 @@ border-bottom-right-radius: 18px;
 }
 
 .subcontainer {
-align-items: center;
-display: flex;
-flex-direction: column;
-justify-content: center;
-max-width: 90%;
-min-width: 50%;
-text-align:center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 95%;
+  min-width: 85%;
+  text-align:center;
 }
 </style>
 `;
@@ -97,9 +96,9 @@ const scoreBoard = (data) => `
         <table>
           <thead>
             <tr>
-              <th style="width:15%">Time</th>
-              <th style="width:25%">Flag</th>
-              <th style="width:60%">Contract</th>
+              <th style="width:20%">Time</th>
+              <th style="width:30%">Flag</th>
+              <th style="width:50%">Contract</th>
             </tr>
           </thead>
           <tbody id='scoreBoard'>
@@ -110,7 +109,7 @@ const scoreBoard = (data) => `
      </div>
   </body>
   <script>
-    var populateFlags = () => {
+    var populateData = () => {
       var scoreBoard = document.querySelector("#scoreBoard")
       const data = ${data}
       data.forEach((entry) => {
@@ -127,10 +126,10 @@ const scoreBoard = (data) => `
         scoreBoard.appendChild(row)
       })
     }
-    var resetScoreBoard = (_event) => {
-      if (confirm("The scoreboard will be reset. This action cannot be undone. Are you sure you wish to proceed?")) {
-        fetch("/reset", { method: "DELETE" })
-        .then(function(response) {
+    var reset = (confirmation) => {
+      if (confirmation === 'RESET') {
+        fetch("/reset", { method: "DELETE", body: confirmation })
+        .then( (response) => {
           if (response.ok) {
             location.reload()
           } else {
@@ -139,8 +138,12 @@ const scoreBoard = (data) => `
         })
       }
     }
-    populateFlags()
-    document.querySelector("h2").addEventListener("click", resetScoreBoard)
+    var requestConfirmation = (_event) => {
+      let confirmation = prompt("Please enter RESET to reset the scoreboard:");
+      reset(confirmation)
+    }
+    document.querySelector("h2").addEventListener("click", requestConfirmation)
+    populateData()
   </script>
 </html>
 `;
@@ -167,11 +170,11 @@ const flag = (name) => `
       let time = (new Date).toTimeString().split(" ")[0]
       if (contract) {
         fetch("/", { method: "PUT", body: JSON.stringify({flag: "${name}", time: time, contract: contract})})
-        .then(function(response) {
+        .then((response) => {
           if (!response.ok) {
             alert("HTTP Error " + response.status + ". Please try again.");
           } else {
-            alert("Successfully captured the ${name} Flag at " + time);
+            alert("Captured ${name} Flag at " + time);
           }
         })
       }
@@ -214,7 +217,7 @@ async function getScoreBoard(_request) {
   let data;
   const cache = await getCache();
   if (!cache) {
-    await setCache(JSON.stringify([]));
+    await setCache("[]");
     data = [];
   } else {
     data = JSON.parse(cache);
@@ -225,23 +228,24 @@ async function getScoreBoard(_request) {
   });
 }
 
-async function resetScoreBoard() {
-  try {
-    await setCache(JSON.stringify([]));
+async function reset(request) {
+  const confirmation = await request.text();
+  if (confirmation === "RESET") {
+    await setCache("[]");
     return new Response(null, { status: 200 });
-  } catch (err) {
-    return new Response(err, { status: 500 });
   }
 }
 
-async function getFlag(number) {
-  if (number >= 1 && number < FLAGNAMES.length) {
-    const body = flag(FLAGNAMES[number]);
+async function getFlag(request) {
+  const { searchParams } = new URL(request.url);
+  const number = searchParams.get("id")
+  if (number >= 1 && number <= FLAGNAMES.length) {
+    const body = flag(FLAGNAMES[number - 1]);
     return new Response(body, {
       headers: { "Content-Type": "text/html" },
     });
   } else {
-    return new Response("The requested flag does not exist", { status: 404 });
+    return new Response("The requested flag does not exist!", { status: 404 });
   }
 }
 
@@ -261,12 +265,10 @@ async function captureFlag(request) {
 async function handleRequest(request) {
   if (request.method === "PUT") {
     return captureFlag(request);
-  } else if (request.url.includes("reset")) {
-    return resetScoreBoard();
+  } else if (request.method === "DELETE") {
+    return reset(request);
   } else if (request.url.includes("flag")) {
-    const { searchParams } = new URL(request.url);
-    let id = searchParams.get("id");
-    return getFlag(id);
+    return getFlag(request);
   } else {
     return getScoreBoard(request);
   }
