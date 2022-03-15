@@ -80,7 +80,7 @@ tr:last-of-type td:last-of-type {
 </style>
 `;
 
-const scoreBoard = (data) => `
+const scoreBoard = (flags) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -92,13 +92,15 @@ const scoreBoard = (data) => `
   <body>
     <div class="container">
       <div class="subcontainer">
-        <h1>Operation Mad Duck</h1>
+        <!-- <h1>Operation Mad Duck</h1> -->
         <table>
           <thead>
             <tr>
+              <th style="width:20%">Name</th>
               <th style="width:20%">Time</th>
-              <th style="width:30%">Flag</th>
-              <th style="width:50%">Contract</th>
+              <th style="width:40%">Contract</th>
+              <th style="width:10%">Red Points</th>
+              <th style="width:10%">Blue Points</th>
             </tr>
           </thead>
           <tbody id='scoreBoard'>
@@ -111,18 +113,28 @@ const scoreBoard = (data) => `
   <script>
     var populateData = () => {
       var scoreBoard = document.querySelector("#scoreBoard")
-      const data = ${data}
-      data.forEach((entry) => {
+      const flags = ${flags}
+      flags.forEach((flag) => {
         var row = document.createElement("tr")
+
+        var name = document.createElement("td")
         var time = document.createElement("td")
-        var flag = document.createElement("td")
         var contract = document.createElement("td")
-        time.innerHTML = entry.time
-        flag.innerHTML = entry.flag
-        contract.innerHTML = entry.contract
+        var red = document.createElement("td")
+        var blue = document.createElement("td")
+
+        name.innerHTML = flag.name
+        time.innerHTML = flag.time
+        contract.innerHTML = flag.contract
+        red.innerHTML = (flag.winner === 'red') ? flag.red : null
+        blue.innerHTML = (flag.winner === 'blue') ? flag.blue : null
+
+        row.appendChild(name)
         row.appendChild(time)
-        row.appendChild(flag)
         row.appendChild(contract)
+        row.appendChild(red)
+        row.appendChild(blue)
+
         scoreBoard.appendChild(row)
       })
     }
@@ -188,40 +200,18 @@ const flag = (name) => `
 </html>
 `;
 
-const FLAGNAMES = [
-  "Broncos",
-  "Buccaneers",
-  "Chargers",
-  "Chiefs",
-  "Cowboys",
-  "Dolphins",
-  "Giants",
-  "Jaguars",
-  "Jets",
-  "Patriots",
-  "Redskins",
-  "Saints",
-  "Seahawks",
-  "Texans",
-  "Titans",
-  "Track | Blake",
-  "Track | Triangle",
-  "Vikings",
-  "Washington",
-];
-
 const getCache = () => FLAGS.get("data");
 const setCache = (data) => FLAGS.put("data", data);
 
 async function getScoreBoard(_request) {
-  let data;
-  const cache = await getCache();
-  if (!cache) {
-    await setCache("[]");
-    data = [];
-  } else {
-    data = JSON.parse(cache);
+
+  const promises = [];
+
+  for await (const key of Array(18).keys()) {
+      promises.push(FLAGS.get((key + 1).toString(), {type: "json"}))
   }
+
+  const data = await Promise.all(promises)
   const body = scoreBoard(JSON.stringify(data));
   return new Response(body, {
     headers: { "Content-Type": "text/html" },

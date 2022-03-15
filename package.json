@@ -1,6 +1,6 @@
 {
   "name": "operation-mad-duck",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "a Cloudflare Workers program for OMD",
   "main": "worker.js",
   "devDependencies": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "miniflare --kv FLAGS --watch --verbose"
+    "run": "miniflare --kv FLAGS --kv-persist --watch --verbose"
   },
   "repository": {
     "type": "git",
