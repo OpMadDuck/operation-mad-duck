@@ -105,6 +105,15 @@ const scoreBoard = (flags) => `
           </thead>
           <tbody id='scoreBoard'>
           </tbody>
+          <tfoot>
+            <tr>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th id='redSum'></th>
+            <th id='blueSum'></th>
+            </tr>
+          </thead>
         </table>
         <h2>Reset Scoreboard</h2>
       </div>
@@ -112,8 +121,10 @@ const scoreBoard = (flags) => `
   </body>
   <script>
     var populateData = () => {
-      var scoreBoard = document.querySelector("#scoreBoard")
+      const scoreBoard = document.querySelector("#scoreBoard")
       const flags = ${flags}
+      var redSum = 0
+      var blueSum = 0
       flags.forEach((flag) => {
         var row = document.createElement("tr")
 
@@ -136,6 +147,15 @@ const scoreBoard = (flags) => `
         row.appendChild(blue)
 
         scoreBoard.appendChild(row)
+
+        if (flag.winner === 'red') {
+          redSum += flag.red
+        } else if (flag.winner === 'blue') {
+          blueSum += flag.blue
+        }
+
+        document.querySelector("#redSum").innerHTML = redSum
+        document.querySelector("#blueSum").innerHTML = blueSum
       })
     }
     var reset = (confirmation) => {
