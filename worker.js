@@ -80,7 +80,7 @@ tr:last-of-type td:last-of-type {
 </style>
 `;
 
-const scoreBoard = (flags) => `
+const board = (flags) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -180,19 +180,19 @@ const scoreBoard = (flags) => `
 </html>
 `;
 
-const flag = (name) => `
+const banner = (flag) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | ${name} Flag</title>
+    <title>Operation Mad Duck | ${flag.name} Flag</title>
     ${style}
   </head>
   <body>
     <div class="container">
         <div class="subcontainer">
-          <h1>${name} Flag</h1>
+          <h1>${flag.name} Flag</h1>
           <h2>Capture!</h2>
         </div>
     </div>
@@ -201,12 +201,12 @@ const flag = (name) => `
     var captureFlag = (contract) => {
       let time = (new Date).toTimeString().split(" ")[0]
       if (contract) {
-        fetch("/", { method: "PUT", body: JSON.stringify({flag: "${name}", time: time, contract: contract})})
+        fetch("/", { method: "PUT", body: JSON.stringify({time: time, contract: contract})})
         .then((response) => {
           if (!response.ok) {
             alert("HTTP Error " + response.status + ". Please try again.");
           } else {
-            alert("Captured ${name} Flag at " + time);
+            alert("Captured flag at " + time);
           }
         })
       }
@@ -220,11 +220,8 @@ const flag = (name) => `
 </html>
 `;
 
-const getCache = () => FLAGS.get("data");
-const setCache = (data) => FLAGS.put("data", data);
-
+// V2 COMPATIBLE
 async function getScoreBoard(_request) {
-
   const promises = [];
 
   for await (const key of Array(18).keys()) {
@@ -232,7 +229,7 @@ async function getScoreBoard(_request) {
   }
 
   const data = await Promise.all(promises)
-  const body = scoreBoard(JSON.stringify(data));
+  const body = board(JSON.stringify(data));
   return new Response(body, {
     headers: { "Content-Type": "text/html" },
   });
@@ -249,14 +246,15 @@ async function reset(request) {
 async function getFlag(request) {
   const { searchParams } = new URL(request.url);
   const number = searchParams.get("id")
-  if (number >= 1 && number <= FLAGNAMES.length) {
-    const body = flag(FLAGNAMES[number - 1]);
-    return new Response(body, {
-      headers: { "Content-Type": "text/html" },
-    });
-  } else {
+  const flag = await FLAGS.get(number)
+  if (flag === null) {
     return new Response("The requested flag does not exist!", { status: 404 });
   }
+
+  const body = banner(flag);
+  return new Response(body, {
+    headers: { "Content-Type": "text/html" },
+  });
 }
 
 async function captureFlag(request) {
