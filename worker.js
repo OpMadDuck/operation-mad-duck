@@ -250,7 +250,6 @@ async function captureFlag(request) {
     const id = searchParams.get("id");
     const contract = await request.text();
     const flag = await FLAGS.get(id, { type: "json" });
-    console.log(flag);
     if (flag.winner) {
       return new Response(null, { status: 403 });
     } else {
@@ -279,13 +278,10 @@ async function check(contract, id) {
   const blueExp = new RegExp(`Blue HQ [\\s\\S]*? Touchdown ${flag.name}`, "i");
 
   if (redExp.test(contract)) {
-    console.log("Valid Red Contract!");
     return "red";
   } else if (blueExp.test(contract)) {
-    console.log("Valid Blue Contract!");
     return "blue";
   } else {
-    console.log("Invalid Contract!!!");
     return null;
   }
 }
