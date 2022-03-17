@@ -85,13 +85,13 @@ const flagPage = (flag) => `
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const id = urlParams.get('id')
-    window.history.replaceState(null, "", "/");
+    window.history.replaceState(null, "", "/confirm");
     var captureFlag = (contract) => {
       if (contract) {
         fetch("/capture?id=" + id, { method: "POST", body: contract })
         .then((response) => {
           if (response.ok) {
-            alert("Contract statement issued successfully");
+            window.location.href = "/confirm";
           } else if (response.status === 403) {
             alert("This flag has already been captured!")
           } else {
@@ -210,7 +210,7 @@ const resetPage = `
     var reset = (confirmation) => {
       if (confirmation === 'RESET') {
         fetch("/reset", { method: "POST", body: confirmation })
-        .then( (response) => {
+        .then((response) => {
           if (response.ok) {
             alert("The score board has been reset!")
           } else {
@@ -233,7 +233,7 @@ async function getFlag(request) {
   const id = searchParams.get("id");
   const flag = await FLAGS.get(id.toString(), { type: "json" });
   if (flag === null) {
-    return new Response("The requested resource could not be found. 🦆", {
+    return new Response("The requested resource could not be found 🦆", {
       status: 404,
     });
   }
@@ -274,9 +274,8 @@ async function captureFlag(request) {
 
 async function check(contract, id) {
   const flag = await FLAGS.get(id, { type: "json" });
-  const redExp = new RegExp(`Red HQ(\,\|\\s)[\S\s]*?(,|\s)Touchdown ${flag.name}`, "i");
-  const blueExp = new RegExp(`Blue HQ(\,\|\\s)[\S\s]*?(,|\s)Touchdown ${flag.name}`, "i");
-
+  const redExp = new RegExp(`Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
+  const blueExp = new RegExp(`Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
   if (redExp.test(contract)) {
     return "red";
   } else if (blueExp.test(contract)) {
@@ -385,6 +384,12 @@ async function resetBoard(request) {
   }
 }
 
+async function confirmContract() {
+  return new Response("Contract logged successfully 💬", {
+    status: 200,
+  });
+}
+
 async function handleRequest(request) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -398,8 +403,10 @@ async function handleRequest(request) {
       return getBoard(request);
     case "/reset":
       return resetBoard(request);
+    case "/confirm":
+      return confirmContract();
     default:
-      return new Response("The requested resource could not be found. 🦆", {
+      return new Response("The requested resource could not be found 🦆", {
         status: 404,
       });
   }
