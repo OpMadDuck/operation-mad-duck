@@ -274,8 +274,8 @@ async function captureFlag(request) {
 
 async function check(contract, id) {
   const flag = await FLAGS.get(id, { type: "json" });
-  const redExp = new RegExp(`Red HQ [\\s\\S]*? Touchdown ${flag.name}`, "i");
-  const blueExp = new RegExp(`Blue HQ [\\s\\S]*? Touchdown ${flag.name}`, "i");
+  const redExp = new RegExp(`Red HQ(\,\|\\s)[\S\s]*?(,|\s)Touchdown ${flag.name}`, "i");
+  const blueExp = new RegExp(`Blue HQ(\,\|\\s)[\S\s]*?(,|\s)Touchdown ${flag.name}`, "i");
 
   if (redExp.test(contract)) {
     return "red";
