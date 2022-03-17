@@ -304,78 +304,24 @@ async function resetBoard(request) {
   if (request.method === "POST") {
     const confirmation = await request.text();
     if (confirmation === "RESET") {
-      await FLAGS.put(
-        "1",
-        '{"name":"Broncos", "times":[], "contracts":[], "red":800, "blue":800, "winner":null}'
-      );
-      await FLAGS.put(
-        "2",
-        '{"name":"Buccaneers", "times":[], "contracts":[], "red":0, "blue":1200, "winner":null}'
-      );
-      await FLAGS.put(
-        "3",
-        '{"name":"Chargers", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await FLAGS.put(
-        "4",
-        '{"name":"Chiefs", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "5",
-        '{"name":"Commanders", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "6",
-        '{"name":"Cowboys", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await FLAGS.put(
-        "7",
-        '{"name":"Dolphins", "times":[], "contracts":[], "red":600, "blue":400, "winner":null}'
-      );
-      await FLAGS.put(
-        "8",
-        '{"name":"Eagles", "times":[], "contracts":[], "red":1200, "blue":600, "winner":null}'
-      );
-      await FLAGS.put(
-        "9",
-        '{"name":"Giants", "times":[], "contracts":[], "red":600, "blue":600, "winner":null}'
-      );
-      await FLAGS.put(
-        "10",
-        '{"name":"Jaguars", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await FLAGS.put(
-        "11",
-        '{"name":"Jets", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
-      );
-      await FLAGS.put(
-        "12",
-        '{"name":"Patriots", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "13",
-        '{"name":"Ravens", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
-      );
-      await FLAGS.put(
-        "14",
-        '{"name":"Saints", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "15",
-        '{"name":"Seahawks", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "16",
-        '{"name":"Texans", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
-      );
-      await FLAGS.put(
-        "17",
-        '{"name":"Titans", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "18",
-        '{"name":"Vikings", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
-      );
+      await FLAGS.put("1", '{"name":"Broncos", "times":[], "contracts":[], "red":800, "blue":800, "winner":null}');
+      await FLAGS.put("2", '{"name":"Buccaneers", "times":[], "contracts":[], "red":0, "blue":1200, "winner":null}');
+      await FLAGS.put("3", '{"name":"Chargers", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}');
+      await FLAGS.put("4", '{"name":"Chiefs", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}');
+      await FLAGS.put("5", '{"name":"Commanders", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}');
+      await FLAGS.put("6", '{"name":"Cowboys", "times":[], "contracts":[], "red":600, "blue":400, "winner":null}');
+      await FLAGS.put("7", '{"name":"Dolphins", "times":[], "contracts":[], "red":600, "blue":600, "winner":null}');
+      await FLAGS.put("8", '{"name":"Eagles", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}');
+      await FLAGS.put("9", '{"name":"Giants", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}');
+      await FLAGS.put("10", '{"name":"Jaguars", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}');
+      await FLAGS.put("11", '{"name":"Jets", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}');
+      await FLAGS.put("12", '{"name":"Patriots", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}');
+      await FLAGS.put("13", '{"name":"Ravens", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}');
+      await FLAGS.put("14", '{"name":"Saints", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}');
+      await FLAGS.put("15", '{"name":"Seahawks", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}');
+      await FLAGS.put("16", '{"name":"Texans", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}');
+      await FLAGS.put("17", '{"name":"Titans", "times":[], "contracts":[], "red":1200, "blue":600, "winner":null}');
+      await FLAGS.put("18", '{"name":"Vikings", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}');
       return new Response(null, { status: 200 });
     }
   } else {
