@@ -165,8 +165,10 @@ const boardPage = (flags) => `
           winningContractID = parseInt(winnerArray[1])
           if (winnerArray[0] === 'red') {
             redSum += flag.red
+            red.innerHTML = flag.red
           } else if (winnerArray[0] === 'blue') {
             blueSum += flag.blue
+            blue.innerHTML = flag.blue
           }
         }
         for (let i = 0; i < flag.contracts.length; i++) {
@@ -176,8 +178,6 @@ const boardPage = (flags) => `
             contracts.innerHTML += '<em>' + flag.times[i] + ': ' + flag.contracts[i] + '</em><br>'
           }
         }
-        red.innerHTML = (flag.winner === 'red') ? flag.red : null
-        blue.innerHTML = (flag.winner === 'blue') ? flag.blue : null
 
         row.appendChild(name)
         row.appendChild(contracts)
@@ -222,6 +222,8 @@ const resetPage = `
             alert("An error occurred. Please try again")
           }
         })
+      } else {
+        alert("Please enter 'RESET' in all caps.")
       }
     }
     var requestConfirmation = (_event) => {
