@@ -85,7 +85,7 @@ const flagPage = (flag) => `
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const id = urlParams.get('id')
-    window.history.replaceState(null, "", "/confirm");
+    window.history.replaceState(null, "", "/");
     var captureFlag = (contract) => {
       if (contract) {
         fetch("/capture?id=" + id, { method: "POST", body: contract })
@@ -93,7 +93,7 @@ const flagPage = (flag) => `
           if (response.ok) {
             window.location.href = "/confirm";
           } else if (response.status === 403) {
-            alert("This flag has already been captured!")
+            window.location.href = "/deny";
           } else {
             alert("HTTP Error " + response.status + ". Please try again.");
           }
@@ -390,6 +390,12 @@ async function confirmContract() {
   });
 }
 
+async function denyContract() {
+  return new Response("This flag has already been captured ⛳️", {
+    status: 403,
+  });
+}
+
 async function handleRequest(request) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -405,6 +411,8 @@ async function handleRequest(request) {
       return resetBoard(request);
     case "/confirm":
       return confirmContract();
+    case "/deny":
+      return denyContract();
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
