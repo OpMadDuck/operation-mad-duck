@@ -158,8 +158,19 @@ const boardPage = (flags) => `
         var blue = document.createElement("td")
 
         name.innerHTML = flag.name
+        let winnerArray;
+        let winningContractID;
+        if(flag.winner) {
+          winnerArray = flag.winner.split(',')
+          winningContractID = parseInt(winnerArray[1])
+          if (winnerArray[0] === 'red') {
+            redSum += flag.red
+          } else if (winnerArray[0] === 'blue') {
+            blueSum += flag.blue
+          }
+        }
         for (let i = 0; i < flag.contracts.length; i++) {
-          if (i === flag.contracts.length - 1 && flag.winner) {
+          if (i === winningContractID) {
             contracts.innerHTML += '<strong>' + flag.times[i] + ': ' + flag.contracts[i] + '</strong><br>'
           } else {
             contracts.innerHTML += '<em>' + flag.times[i] + ': ' + flag.contracts[i] + '</em><br>'
@@ -174,12 +185,6 @@ const boardPage = (flags) => `
         row.appendChild(blue)
 
         scoreBoard.appendChild(row)
-
-        if (flag.winner === 'red') {
-          redSum += flag.red
-        } else if (flag.winner === 'blue') {
-          blueSum += flag.blue
-        }
 
         document.querySelector("#redSum").innerHTML = redSum
         document.querySelector("#blueSum").innerHTML = blueSum
@@ -250,23 +255,24 @@ async function captureFlag(request) {
     const id = searchParams.get("id");
     const contract = await request.text();
     const flag = await FLAGS.get(id, { type: "json" });
+    let winner;
     if (flag.winner) {
-      return new Response(null, { status: 403 });
+      winner = flag.winner
     } else {
-      const winner = await check(contract, id);
-      await FLAGS.put(
-        id,
-        JSON.stringify({
-          name: flag.name,
-          times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
-          contracts: flag.contracts.concat(contract),
-          red: flag.red,
-          blue: flag.blue,
-          winner: winner,
-        })
-      );
-      return new Response(null, { status: 200 });
+      winner = await check(contract, id);
     }
+    await FLAGS.put(
+      id,
+      JSON.stringify({
+        name: flag.name,
+        times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
+        contracts: flag.contracts.concat(contract),
+        red: flag.red,
+        blue: flag.blue,
+        winner: winner
+      })
+    );
+    return new Response(null, { status: 200 });
   } catch (err) {
     return new Response(err, { status: 500 });
   }
@@ -277,9 +283,9 @@ async function check(contract, id) {
   const redExp = new RegExp(`Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
   const blueExp = new RegExp(`Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
   if (redExp.test(contract)) {
-    return "red";
+    return "red," + flag.contracts.length;
   } else if (blueExp.test(contract)) {
-    return "blue";
+    return "blue," + flag.contracts.length;
   } else {
     return null;
   }
@@ -385,14 +391,8 @@ async function resetBoard(request) {
 }
 
 async function confirmContract() {
-  return new Response("Contract logged successfully 💬", {
+  return new Response("Contract received 💬", {
     status: 200,
-  });
-}
-
-async function denyContract() {
-  return new Response("This flag has already been captured ⛳️", {
-    status: 403,
   });
 }
 
@@ -411,8 +411,6 @@ async function handleRequest(request) {
       return resetBoard(request);
     case "/confirm":
       return confirmContract();
-    case "/deny":
-      return denyContract();
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
