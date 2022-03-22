@@ -4,8 +4,8 @@ A CTF exercise designed to help UCWT students plan and execute a tactical operat
 ## Production Resources and Links
 - A [live scoreboard](https://operation.madduck.workers.dev/board) can be viewed online. Please note that you must refresh the page in order to see newly captured flags. The total score for each team is updated automatically.
 - By performing a [game reset](https://operation.madduck.workers.dev/reset), all contract and flag capture data will be erased.
-- Refer to the `QR Codes` folder of this repository for flag information.
-- The `Resources` folder of this repository contains a CSV file comprised of each flag's point values, location, unique identifier, and name.
+- Refer to the `qr codes` folder of this repository for flag information.
+- The `points.csv` file lists each flag's point values, unique identifier, and name.
 
 ## Tools
 ### Cloudflare Workers
