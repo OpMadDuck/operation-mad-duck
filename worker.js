@@ -352,7 +352,7 @@ async function getFlag(request) {
 
   const body = flagPage(flag);
   return new Response(body, {
-    headers: { "Content-Type": "text/html"},
+    headers: { "Content-Type": "text/html" },
   });
 }
 
