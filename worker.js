@@ -1,7 +1,7 @@
 /**
  * The HTML formatted CSS style block which includes global styling
  * for all HTML responses. These rules are a minimum requirement
- * to display data properly on the flagPage, boardPage, and resetPage. 
+ * to display data properly on the flagPage, boardPage, and resetPage.
  */
 const style = `
 <style>
@@ -71,7 +71,7 @@ th, td {
 
 /**
  * flagPage consumes a flag object and returns a response body as a string.
- * The response body represents a flag waypoint - the content shown to a 
+ * The response body represents a flag waypoint - the content shown to a
  * user when they scan the appropriate QR code. Additional code is included in
  * the body of the response (see below).
  * @param {Object} flag
@@ -145,6 +145,13 @@ const flagPage = (flag) => `
 </html>
 `;
 
+/**
+ * boardPage consumes an array of all flag objects and returns a response
+ * body as a string. The response body represents a score board for all
+ * flags, and the total scores for each team. Every contract logged is made
+ * visible on the board. Additional code is included in the body of the response.
+ * @param {Array<Object>} flags
+ */
 const boardPage = (flags) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -157,14 +164,13 @@ const boardPage = (flags) => `
   <body>
     <div class="container">
       <div class="subcontainer">
-        <!-- <h1>Operation Mad Duck</h1> -->
         <table>
           <thead>
             <tr>
               <th style="width:15%">Name</th>
               <th style="width:65%">Contracts</th>
-              <th style="width:10%">Red Points</th>
-              <th style="width:10%">Blue Points</th>
+              <th style="width:10%">Red</th>
+              <th style="width:10%">Blue</th>
             </tr>
           </thead>
           <tbody id='scoreBoard'>
@@ -180,92 +186,111 @@ const boardPage = (flags) => `
      </div>
   </body>
   <script>
-    var populateData = () => {
-      const scoreBoard = document.querySelector("#scoreBoard")
-      const flags = ${flags}
-      var redSum = 0
-      var blueSum = 0
-      flags.forEach((flag) => {
-        var row = document.createElement("tr")
+    const flags = ${flags}
+    const scoreBoard = document.querySelector("#scoreBoard")
+    var redSum = 0
+    var blueSum = 0
+    flags.forEach((flag) => {
+      var row = document.createElement("tr")
 
-        var name = document.createElement("td")
-        var contracts = document.createElement("td")
-        var red = document.createElement("td")
-        var blue = document.createElement("td")
+      var name = document.createElement("td")
+      name.innerHTML = flag.name
 
-        name.innerHTML = flag.name
-        let winnerArray;
-        let winningContractID;
-        if(flag.winner) {
-          winnerArray = flag.winner.split(',')
-          winningContractID = parseInt(winnerArray[1])
-          if (winnerArray[0] === 'red') {
-            redSum += flag.red
-            red.innerHTML = flag.red
-          } else if (winnerArray[0] === 'blue') {
-            blueSum += flag.blue
-            blue.innerHTML = flag.blue
-          }
+      var red = document.createElement("td")
+      var blue = document.createElement("td")
+      let winningContractID;
+      if(flag.winner) {
+        let winnerArray = flag.winner.split(',')
+        winningContractID = parseInt(winnerArray[1])
+        if (winnerArray[0] === 'red') {
+          redSum += flag.red
+          red.innerHTML = flag.red
+        } else if (winnerArray[0] === 'blue') {
+          blueSum += flag.blue
+          blue.innerHTML = flag.blue
         }
-        for (let i = 0; i < flag.contracts.length; i++) {
-          if (i === winningContractID) {
-            contracts.innerHTML += '<strong>' + flag.times[i] + ': ' + flag.contracts[i] + '</strong><br>'
-          } else {
-            contracts.innerHTML += '<em>' + flag.times[i] + ': ' + flag.contracts[i] + '</em><br>'
-          }
+      }
+
+      var contracts = document.createElement("td")
+      for (let i = 0; i < flag.contracts.length; i++) {
+        if (i === winningContractID) {
+          contracts.innerHTML += '<strong>' + flag.times[i] + ': ' + flag.contracts[i] + '</strong><br>'
+        } else {
+          contracts.innerHTML += '<em>' + flag.times[i] + ': ' + flag.contracts[i] + '</em><br>'
         }
+      }
 
-        row.appendChild(name)
-        row.appendChild(contracts)
-        row.appendChild(red)
-        row.appendChild(blue)
+      row.appendChild(name)
+      row.appendChild(contracts)
+      row.appendChild(red)
+      row.appendChild(blue)
 
-        scoreBoard.appendChild(row)
+      scoreBoard.appendChild(row)
 
-        document.querySelector("#redSum").innerHTML = redSum
-        document.querySelector("#blueSum").innerHTML = blueSum
-      })
-    }
-    populateData()
+      document.querySelector("#redSum").innerHTML = redSum
+      document.querySelector("#blueSum").innerHTML = blueSum
+    })
   </script>
 </html>
 `;
 
+/**
+ * resetPage returns a response body as a string. The response body contains
+ * a button which will revert the Worker KV database back to its original
+ * state. There is no way to restore the data once the reset occurs.
+ */
 const resetPage = `
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | Admin</title>
+    <title>Operation Mad Duck | Reset</title>
     ${style}
   </head>
   <body>
     <div class="container">
       <div class="subcontainer">
-        <h2>Reset Scoreboard</h2>
+        <h2>Reset!</h2>
       </div>
      </div>
   </body>
   <script>
+    /**
+     * reset consumes a confirmation in the form of a String and posts it back 
+     * to the Worker to reset the KV store. If the server accepts the confirmation,
+     * the user will be redirected to the score board. If the server encounters an error, 
+     * then the user will be prompted to reattempt the reset.
+     * @param {String} confirmation
+     */
     var reset = (confirmation) => {
-      if (confirmation === 'RESET') {
+      if (confirmation === 'RESETMADDUCK') {
         fetch("/reset", { method: "POST", body: confirmation })
         .then((response) => {
-          if (response.ok) {
-            alert("The score board has been reset!")
+          if (!response.ok) {
+            alert("HTTP Error " + response.status + ". Please try again.");
           } else {
-            alert("An error occurred. Please try again")
+            window.location.href = "/board";
           }
         })
       } else {
-        alert("Please enter 'RESET' in all caps.")
+        alert("Please enter RESETMADDUCK in all caps.")
       }
     }
+
+    /**
+     * requestConfirmation prompts the user to submit their proper confirmation 
+     * message to reset the game.
+     * @param {Event} _event
+     */
     var requestConfirmation = (_event) => {
-      let confirmation = prompt("Please enter RESET to reset the scoreboard:");
+      let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
       reset(confirmation)
     }
+
+    /**
+     * Wait for the user to tap/click the 'Reset!' button on the page.
+     */
     document.querySelector("h2").addEventListener("click", requestConfirmation)
   </script>
 </html>
@@ -352,7 +377,7 @@ async function getBoard(_request) {
 async function resetBoard(request) {
   if (request.method === "POST") {
     const confirmation = await request.text();
-    if (confirmation === "RESET") {
+    if (confirmation === "RESETMADDUCK") {
       await FLAGS.put(
         "1",
         '{"name":"Broncos", "times":[], "contracts":[], "red":800, "blue":800, "winner":null}'
