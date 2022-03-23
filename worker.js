@@ -247,9 +247,9 @@ const boardPage = (flags) => `
        */
       for (let i = 0; i < flag.contracts.length; i++) {
         if (i === winningContractID) {
-          contracts.innerHTML += '<strong>' + flag.times[i] + ': ' + flag.contracts[i] + '</strong><br>'
+          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + flag.contracts[i] + '</strong><br>'
         } else {
-          contracts.innerHTML += '<em>' + flag.times[i] + ': ' + flag.contracts[i] + '</em><br>'
+          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + flag.contracts[i] + '</em><br>'
         }
       }
 
@@ -334,6 +334,12 @@ const resetPage = `
 </html>
 `;
 
+/**
+ * getFlag consumes a request forwarded by the handleRequest() function
+ * and supplies a dynamic Response containing a flagPage.
+ * @param {Request} request
+ * @returns {Response}
+ */
 async function getFlag(request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -350,6 +356,13 @@ async function getFlag(request) {
   });
 }
 
+/**
+ * captureFlag consumes a request forwarded by the handleRequest() function
+ * and runs a check on the submitted contract prior to logging it's contents.
+ * After passing all required checks, data is updated in the KV store.
+ * @param {Request} request
+ * @returns {Response}
+ */
 async function captureFlag(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -379,6 +392,14 @@ async function captureFlag(request) {
   }
 }
 
+/**
+ * check consumes a contract statement and flag ID from the captureFlag()
+ * function. If the supplied contract is correct, then a result is returned
+ * bearing the winning team and an index of the winning contract
+ * @param {String} contract
+ * @param {String} id
+ * @returns {String} winningTeam,winningContract
+ */
 async function check(contract, id) {
   const flag = await FLAGS.get(id, { type: "json" });
   const redExp = new RegExp(
@@ -398,7 +419,13 @@ async function check(contract, id) {
   }
 }
 
-async function getBoard(_request) {
+/**
+ * getBoard consumes a request forwarded by the handleRequest() function
+ * and returns a response with boardPage in the body. All data must be
+ * retrieved from the KV store prior to issuing a Response.
+ * @returns {Response}
+ */
+async function getBoard() {
   const promises = [];
 
   for (const key of Array(18).keys()) {
@@ -412,6 +439,13 @@ async function getBoard(_request) {
   });
 }
 
+/**
+ * resetBoard consumes a request forwarded by the handleRequest() function
+ * and runs a check on the submitted confirmation message prior to resetting
+ * the game state. After passing all required checks, data is reset in the KV store.
+ * @param {Request} request
+ * @returns {Response}
+ */
 async function resetBoard(request) {
   if (request.method === "POST") {
     const confirmation = await request.text();
@@ -497,12 +531,25 @@ async function resetBoard(request) {
   }
 }
 
+/**
+ * confirmContract will notify the user that their submitted
+ * contract has been logged successfully by the Worker.
+ * @returns {Response}
+ */
 async function confirmContract() {
   return new Response("Contract received 💬", {
     status: 200,
   });
 }
 
+/**
+ * handleRequest consumes a request forwarded by the main event listener.
+ * Depending on the URL path, this function defers Responses to the functions
+ * written above. If no suitable function is found for the requested path,
+ * a 404 Not Found response is issued to the user. Quack!
+ * @param {Request} request
+ * @returns {Response}
+ */
 async function handleRequest(request) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -513,7 +560,7 @@ async function handleRequest(request) {
     case "/capture":
       return captureFlag(request);
     case "/board":
-      return getBoard(request);
+      return getBoard();
     case "/reset":
       return resetBoard(request);
     case "/confirm":
@@ -525,6 +572,10 @@ async function handleRequest(request) {
   }
 }
 
+/**
+ * Listen for a fetch event. When such an event occurs, respond with
+ * the data provided by the handleRequest() function above.
+ */
 addEventListener("fetch", (event) => {
   event.respondWith(handleRequest(event.request));
 });
