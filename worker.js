@@ -121,7 +121,7 @@ const flagPage = (flag) => `
           if (!response.ok) {
             alert("HTTP Error " + response.status + ". Please try again.");
           } else {
-            window.location.href = "/confirm";
+            window.location.replace("/confirm");
           }
         })
       }
@@ -352,7 +352,7 @@ async function getFlag(request) {
 
   const body = flagPage(flag);
   return new Response(body, {
-    headers: { "Content-Type": "text/html" },
+    headers: { "Content-Type": "text/html"},
   });
 }
 
@@ -539,6 +539,7 @@ async function resetBoard(request) {
 async function confirmContract() {
   return new Response("Contract received 💬", {
     status: 200,
+    headers: { "Clear-Site-Data": "*" },
   });
 }
 
