@@ -186,18 +186,48 @@ const boardPage = (flags) => `
      </div>
   </body>
   <script>
+    /**
+     * Instantiate the array of flags passed in from the worker.
+     */
     const flags = ${flags}
+
+    /**
+     * Identify the score board table by its HTML ID
+     */
     const scoreBoard = document.querySelector("#scoreBoard")
+
+    /**
+     * Instantiate the total point values for each team
+     */
     var redSum = 0
     var blueSum = 0
+
     flags.forEach((flag) => {
+      /**
+       * Create the HTML elements for the row
+       * that will represent this flag, including:
+       * - The flag name
+       * - The contracts issued for this flag
+       * - The red team's points for this flag
+       * - The blue team's points for this flag
+       */
       var row = document.createElement("tr")
-
       var name = document.createElement("td")
-      name.innerHTML = flag.name
-
+      var contracts = document.createElement("td")
       var red = document.createElement("td")
       var blue = document.createElement("td")
+
+      /**
+       * Set the name of the flag
+       */
+      name.innerHTML = flag.name
+
+      /** 
+       * Determine the winning contract and the team
+       * which won this flag. Assign the correct point
+       * value to the winning team and add it to the
+       * total point value for the team.
+       */
       let winningContractID;
       if(flag.winner) {
         let winnerArray = flag.winner.split(',')
@@ -211,7 +241,10 @@ const boardPage = (flags) => `
         }
       }
 
-      var contracts = document.createElement("td")
+      /**
+       * Style the contract log, italicizing the improper
+       * contracts, and bolding the proper/winning contract.
+       */
       for (let i = 0; i < flag.contracts.length; i++) {
         if (i === winningContractID) {
           contracts.innerHTML += '<strong>' + flag.times[i] + ': ' + flag.contracts[i] + '</strong><br>'
@@ -220,16 +253,21 @@ const boardPage = (flags) => `
         }
       }
 
+      /**
+       * Append the newly loaded data into the table row
+       */
       row.appendChild(name)
       row.appendChild(contracts)
       row.appendChild(red)
       row.appendChild(blue)
-
       scoreBoard.appendChild(row)
-
-      document.querySelector("#redSum").innerHTML = redSum
-      document.querySelector("#blueSum").innerHTML = blueSum
     })
+
+    /** 
+     * Set the sum total values in the table
+     */
+    document.querySelector("#redSum").innerHTML = redSum
+    document.querySelector("#blueSum").innerHTML = blueSum
   </script>
 </html>
 `;
