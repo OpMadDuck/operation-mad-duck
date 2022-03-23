@@ -1,3 +1,8 @@
+/**
+ * The HTML formatted CSS style block which includes global styling
+ * for all HTML responses. These rules are a minimum requirement
+ * to display data properly on the flagPage, boardPage, and resetPage. 
+ */
 const style = `
 <style>
 body {
@@ -64,6 +69,13 @@ th, td {
 </style>
 `;
 
+/**
+ * flagPage consumes a flag object and returns a response body as a string.
+ * The response body represents a flag waypoint - the content shown to a 
+ * user when they scan the appropriate QR code. Additional code is included in
+ * the body of the response (see below).
+ * @param {Object} flag
+ */
 const flagPage = (flag) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -82,28 +94,52 @@ const flagPage = (flag) => `
     </div>
   </body>
   <script>
+    // Save the query strings in the URL
     const queryString = window.location.search;
+
+    // Parse the saved search parameters
     const urlParams = new URLSearchParams(queryString);
+
+    // Get the value of the ID (must be a value between 1-18)
     const id = urlParams.get('id')
+
+    // Prevent the user from seeing the ID in the URL bar
     window.history.replaceState(null, "", "/");
+
+    /**
+     * captureFlag consumes a contract in the form of a String and posts it back 
+     * to the Worker for logging. If the server accepts the contract, the user 
+     * will be redirected to prevent them from accessing the page again directly. 
+     * If the server encounters an error, then the user will be prompted to resubmit 
+     * their contract.
+     * @param {String} contract
+     */
     var captureFlag = (contract) => {
       if (contract) {
         fetch("/capture?id=" + id, { method: "POST", body: contract })
         .then((response) => {
-          if (response.ok) {
-            window.location.href = "/confirm";
-          } else if (response.status === 403) {
-            window.location.href = "/deny";
-          } else {
+          if (!response.ok) {
             alert("HTTP Error " + response.status + ". Please try again.");
+          } else {
+            window.location.href = "/confirm";
           }
         })
       }
     }
+
+    /**
+     * requestContract prompts the user to submit their team's contract to 
+     * capture the flag, and then passes the result to the captureFlag function.
+     * @param {Event} _event
+     */
     var requestContract = (_event) => {
       let contract = prompt("Please enter your team's contract:");
       captureFlag(contract)
     }
+
+    /**
+     * Wait for the user to tap/click the 'Capture!' button on the page.
+     */
     document.querySelector("h2").addEventListener("click", requestContract)
   </script>
 </html>
@@ -259,7 +295,7 @@ async function captureFlag(request) {
     const flag = await FLAGS.get(id, { type: "json" });
     let winner;
     if (flag.winner) {
-      winner = flag.winner
+      winner = flag.winner;
     } else {
       winner = await check(contract, id);
     }
@@ -271,7 +307,7 @@ async function captureFlag(request) {
         contracts: flag.contracts.concat(contract),
         red: flag.red,
         blue: flag.blue,
-        winner: winner
+        winner: winner,
       })
     );
     return new Response(null, { status: 200 });
@@ -282,8 +318,14 @@ async function captureFlag(request) {
 
 async function check(contract, id) {
   const flag = await FLAGS.get(id, { type: "json" });
-  const redExp = new RegExp(`Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
-  const blueExp = new RegExp(`Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
+  const redExp = new RegExp(
+    `Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
+    "i"
+  );
+  const blueExp = new RegExp(
+    `Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
+    "i"
+  );
   if (redExp.test(contract)) {
     return "red," + flag.contracts.length;
   } else if (blueExp.test(contract)) {
