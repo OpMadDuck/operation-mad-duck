@@ -1,3 +1,99 @@
+/** Flag Values
+ *
+ */
+const flags = [
+  {
+    name: "Broncos",
+    red: 800,
+    blue: 800,
+  },
+  {
+    name: "Buccaneers",
+    red: 0,
+    blue: 1200,
+  },
+  {
+    name: "Chargers",
+    red: 400,
+    blue: 400,
+  },
+  {
+    name: "Chiefs",
+    red: 800,
+    blue: 200,
+  },
+  {
+    name: "Commanders",
+    red: 400,
+    blue: 400,
+  },
+  {
+    name: "Cowboys",
+    red: 600,
+    blue: 400,
+  },
+  {
+    name: "Dolphins",
+    red: 600,
+    blue: 600,
+  },
+  {
+    name: "Eagles",
+    red: 400,
+    blue: 400,
+  },
+  {
+    name: "Giants",
+    red: 200,
+    blue: 600,
+  },
+  {
+    name: "Jaguars",
+    red: 800,
+    blue: 200,
+  },
+  {
+    name: "Jets",
+    red: 200,
+    blue: 200,
+  },
+  {
+    name: "Patriots",
+    red: 800,
+    blue: 200,
+  },
+  {
+    name: "Ravens",
+    red: 200,
+    blue: 200,
+  },
+  {
+    name: "Saints",
+    red: 200,
+    blue: 600,
+  },
+  {
+    name: "Seahawks",
+    red: 800,
+    blue: 200,
+  },
+  {
+    name: "Texans",
+    red: 200,
+    blue: 800,
+  },
+  {
+    name: "Titans",
+    red: 1200,
+    blue: 600,
+  },
+  {
+    name: "Vikings",
+    red: 200,
+    blue: 800,
+  },
+];
+
 /**
  * The HTML formatted CSS style block which includes global styling
  * for all HTML responses. These rules are a minimum requirement
@@ -116,7 +212,7 @@ const flagPage = (flag) => `
      */
     var captureFlag = (contract) => {
       if (contract) {
-        fetch("/capture?id=" + id, { method: "POST", body: contract })
+        fetch("/capture?id=" + id, { method: "POST", body: JSON.stringify({time: Date.now(), contract: contract}) })
         .then((response) => {
           if (!response.ok) {
             alert("HTTP Error " + response.status + ". Please try again.");
@@ -150,9 +246,9 @@ const flagPage = (flag) => `
  * body as a string. The response body represents a score board for all
  * flags, and the total scores for each team. Every contract logged is made
  * visible on the board. Additional code is included in the body of the response.
- * @param {Array<Object>} flags
+ * @param {Array<Object>} contracts
  */
-const boardPage = (flags) => `
+const boardPage = (contracts) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -167,16 +263,13 @@ const boardPage = (flags) => `
         <table>
           <thead>
             <tr>
-              <th style="width:15%">Name</th>
-              <th style="width:65%">Contracts</th>
-              <th style="width:10%">Red</th>
-              <th style="width:10%">Blue</th>
+              <th style="width:90%">Contract</th>
+              <th style="width:10%">Points</th>
             </tr>
           </thead>
           <tbody id='scoreBoard'>
           </tbody>
           <tr>
-            <th></th>
             <th></th>
             <th id='redSum'></th>
             <th id='blueSum'></th>
@@ -187,22 +280,24 @@ const boardPage = (flags) => `
   </body>
   <script>
     /**
-     * Instantiate the array of flags passed in from the worker.
+     * Instantiate the array of contracts.
      */
-    const flags = ${flags}
+    const contracts = ${contracts}
+  
+    /**
+     * Instantiate the array of flag objects.
+     */
+    const flags = ${JSON.stringify(flags)}
 
     /**
      * Identify the score board table by its HTML ID
      */
     const scoreBoard = document.querySelector("#scoreBoard")
 
-    /**
-     * Instantiate the total point values for each team
-     */
     var redSum = 0
     var blueSum = 0
 
-    flags.forEach((flag) => {
+    contracts.forEach((contract) => {
       /**
        * Create the HTML elements for the row
        * that will represent this flag, including:
@@ -212,54 +307,29 @@ const boardPage = (flags) => `
        * - The blue team's points for this flag
        */
       var row = document.createElement("tr")
-      var name = document.createElement("td")
-      var contracts = document.createElement("td")
-      var red = document.createElement("td")
-      var blue = document.createElement("td")
+      var statement = document.createElement("td")
+      var points = document.createElement("td")
+      
+      if (contract.team) {
+        statement.innerHTML += '<strong>' + contract.statement + '</strong>'
 
-      /**
-       * Set the name of the flag
-       */
-      name.innerHTML = flag.name
-
-      /** 
-       * Determine the winning contract and the team
-       * which won this flag. Assign the correct point
-       * value to the winning team and add it to the
-       * total point value for the team.
-       */
-      let winningContractID;
-      if(flag.winner) {
-        let winnerArray = flag.winner.split(',')
-        winningContractID = parseInt(winnerArray[1])
-        if (winnerArray[0] === 'red') {
-          redSum += flag.red
-          red.innerHTML = flag.red
-        } else if (winnerArray[0] === 'blue') {
-          blueSum += flag.blue
-          blue.innerHTML = flag.blue
-        }
-      }
-
-      /**
-       * Style the contract log, italicizing the improper
-       * contracts, and bolding the proper/winning contract.
-       */
-      for (let i = 0; i < flag.contracts.length; i++) {
-        if (i === winningContractID) {
-          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + flag.contracts[i] + '</strong><br>'
+        let points = flags[contract.id][contract.team]
+        points.innerHTML = points
+        
+        if (contract.team == 'blue') {
+          blueSum += points
         } else {
-          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + flag.contracts[i] + '</em><br>'
+          redSum += points
         }
+      } else {
+        statement.innerHTML += '<em>' + contract.statement + '</em>'
       }
 
       /**
        * Append the newly loaded data into the table row
        */
-      row.appendChild(name)
-      row.appendChild(contracts)
-      row.appendChild(red)
-      row.appendChild(blue)
+      row.appendChild(statement)
+      row.appendChild(points)
       scoreBoard.appendChild(row)
     })
 
@@ -342,15 +412,14 @@ const resetPage = `
  */
 async function getFlag(request) {
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-  const flag = await FLAGS.get(id.toString(), { type: "json" });
-  if (flag === null) {
+  const id = searchParams.get("id") - 1;
+  if (!flags[id]) {
     return new Response("The requested resource could not be found 🦆", {
       status: 404,
     });
   }
 
-  const body = flagPage(flag);
+  const body = flagPage(flags[id]);
   return new Response(body, {
     headers: { "Content-Type": "text/html" },
   });
@@ -367,24 +436,17 @@ async function captureFlag(request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    const contract = await request.text();
-    const flag = await FLAGS.get(id, { type: "json" });
-    let winner;
-    if (flag.winner) {
-      winner = flag.winner;
-    } else {
-      winner = await check(contract, id);
-    }
-    await FLAGS.put(
-      id,
+    const body = await request.json();
+    const team = await check(body.contract, id);
+    const secondsFromNow = 10800
+    await CONTRACTS.put(
+      body.time.toString(),
       JSON.stringify({
-        name: flag.name,
-        times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
-        contracts: flag.contracts.concat(contract),
-        red: flag.red,
-        blue: flag.blue,
-        winner: winner,
-      })
+          id: id,
+          team: team,
+          statement: body.contract,
+      }),
+      {expirationTtl: secondsFromNow}
     );
     return new Response(null, { status: 200 });
   } catch (err) {
@@ -401,19 +463,19 @@ async function captureFlag(request) {
  * @returns {String} winningTeam,winningContract
  */
 async function check(contract, id) {
-  const flag = await FLAGS.get(id, { type: "json" });
+  const flag = flags[id - 1];
   const redExp = new RegExp(
-    `Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
+    `red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
     "i"
   );
   const blueExp = new RegExp(
-    `Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
+    `blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
     "i"
   );
   if (redExp.test(contract)) {
-    return "red," + flag.contracts.length;
+    return "red";
   } else if (blueExp.test(contract)) {
-    return "blue," + flag.contracts.length;
+    return "blue";
   } else {
     return null;
   }
@@ -428,8 +490,10 @@ async function check(contract, id) {
 async function getBoard() {
   const promises = [];
 
-  for (const key of Array(18).keys()) {
-    promises.push(FLAGS.get((key + 1).toString(), { type: "json" }));
+  const list = await CONTRACTS.list();
+  console.log(list);
+  for (const key of list.keys) {
+    promises.push(CONTRACTS.get(key.name, { type: "json" }));
   }
 
   const data = await Promise.all(promises);
@@ -437,98 +501,6 @@ async function getBoard() {
   return new Response(body, {
     headers: { "Content-Type": "text/html" },
   });
-}
-
-/**
- * resetBoard consumes a request forwarded by the handleRequest() function
- * and runs a check on the submitted confirmation message prior to resetting
- * the game state. After passing all required checks, data is reset in the KV store.
- * @param {Request} request
- * @returns {Response}
- */
-async function resetBoard(request) {
-  if (request.method === "POST") {
-    const confirmation = await request.text();
-    if (confirmation === "RESETMADDUCK") {
-      await FLAGS.put(
-        "1",
-        '{"name":"Broncos", "times":[], "contracts":[], "red":800, "blue":800, "winner":null}'
-      );
-      await FLAGS.put(
-        "2",
-        '{"name":"Buccaneers", "times":[], "contracts":[], "red":0, "blue":1200, "winner":null}'
-      );
-      await FLAGS.put(
-        "3",
-        '{"name":"Chargers", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await FLAGS.put(
-        "4",
-        '{"name":"Chiefs", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "5",
-        '{"name":"Commanders", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await FLAGS.put(
-        "6",
-        '{"name":"Cowboys", "times":[], "contracts":[], "red":600, "blue":400, "winner":null}'
-      );
-      await FLAGS.put(
-        "7",
-        '{"name":"Dolphins", "times":[], "contracts":[], "red":600, "blue":600, "winner":null}'
-      );
-      await FLAGS.put(
-        "8",
-        '{"name":"Eagles", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await FLAGS.put(
-        "9",
-        '{"name":"Giants", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
-      );
-      await FLAGS.put(
-        "10",
-        '{"name":"Jaguars", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "11",
-        '{"name":"Jets", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "12",
-        '{"name":"Patriots", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "13",
-        '{"name":"Ravens", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "14",
-        '{"name":"Saints", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
-      );
-      await FLAGS.put(
-        "15",
-        '{"name":"Seahawks", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await FLAGS.put(
-        "16",
-        '{"name":"Texans", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
-      );
-      await FLAGS.put(
-        "17",
-        '{"name":"Titans", "times":[], "contracts":[], "red":1200, "blue":600, "winner":null}'
-      );
-      await FLAGS.put(
-        "18",
-        '{"name":"Vikings", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
-      );
-      return new Response(null, { status: 200 });
-    }
-  } else {
-    return new Response(resetPage, {
-      headers: { "Content-Type": "text/html" },
-    });
-  }
 }
 
 /**
@@ -562,8 +534,6 @@ async function handleRequest(request) {
       return captureFlag(request);
     case "/board":
       return getBoard();
-    case "/reset":
-      return resetBoard(request);
     case "/confirm":
       return confirmContract();
     default:
