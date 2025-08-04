@@ -192,6 +192,20 @@ const boardPage = (flags) => `
     const flags = ${flags}
 
     /**
+     * escapeHtml sanitizes potentially dangerous javascript input.
+     * This helps prevent accidentally or intentionally unanticipated
+     * manipulation of the flag scoring and tracking mechanics.
+     */
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    /**
      * Identify the score board table by its HTML ID
      */
     const scoreBoard = document.querySelector("#scoreBoard")
@@ -247,9 +261,9 @@ const boardPage = (flags) => `
        */
       for (let i = 0; i < flag.contracts.length; i++) {
         if (i === winningContractID) {
-          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + flag.contracts[i] + '</strong><br>'
+          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>'
         } else {
-          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + flag.contracts[i] + '</em><br>'
+          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>'
         }
       }
 
