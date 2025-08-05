@@ -1,4 +1,13 @@
 /**
+ * Summary of changes:
+ * [+] Added input sanitization for XSS vulnerability
+ * [+] Added geofencing functionality so users must be within 50 meters when submitting contracts to capture flags
+ * [++] NOTE: Geofencing will require users to allow mobile browser location permissions
+ * [++] Recommend requiring users to test a QR code together in class prior to ROC drill
+ * [+] Added functionality to append user's current location data and distance from flag to scoreboard upon successful submission
+ */
+
+/**
  * The HTML formatted CSS style block which includes global styling
  * for all HTML responses. These rules are a minimum requirement
  * to display data properly on the flagPage, boardPage, and resetPage.
@@ -87,24 +96,24 @@ const flagPage = (flag) => `
   </head>
   <body>
     <div class="container">
-        <div class="subcontainer">
-          <h1>${flag.name} Flag</h1>
-          <h2>Capture!</h2>
-        </div>
+      <div class="subcontainer">
+        <h1>${flag.name} Flag</h1>
+        <h2>Capture!</h2>
+      </div>
     </div>
-  </body>
-  <script>
-    // Save the query strings in the URL
-    const queryString = window.location.search;
 
-    // Parse the saved search parameters
-    const urlParams = new URLSearchParams(queryString);
+    <script>
+      // Save the query strings in the URL
+      const queryString = window.location.search;
 
-    // Get the value of the ID (must be a value between 1-18)
-    const id = urlParams.get('id')
+      // Parse the saved search parameters  
+      const urlParams = new URLSearchParams(queryString);
 
-    // Prevent the user from seeing the ID in the URL bar
-    window.history.replaceState(null, "", "/");
+      // Get the value of the ID (must be a value between 1-18)
+      const id = urlParams.get("id");
+
+      // Prevent the user from seeing the ID in the URL bar
+      window.history.replaceState(null, "", "/");
 
     /**
      * captureFlag consumes a contract in the form of a String and posts it back 
@@ -114,34 +123,78 @@ const flagPage = (flag) => `
      * their contract.
      * @param {String} contract
      */
-    var captureFlag = (contract) => {
-      if (contract) {
-        fetch("/capture?id=" + id, { method: "POST", body: contract })
-        .then((response) => {
-          if (!response.ok) {
-            alert("HTTP Error " + response.status + ". Please try again.");
-          } else {
-            window.location.replace("/confirm");
-          }
-        })
-      }
-    }
+      const captureFlag = (contract) => {
+        if (contract) {
+          console.log("About to ask for location...");
+          navigator.geolocation.getCurrentPosition((position) => {
+
+            /** Include the user's location and distance from the flag in contract logs. -GKT
+            */
+            const userLocation = {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            };
+            const targetLocation = ${JSON.stringify(FLAG_COORDS)}[id]; // inject FLAG_COORDS into the page
+            const distance = Math.round(
+              (function calculateDistance(loc1, loc2) {
+                const toRad = (val) => val * Math.PI / 180;
+                const R = 6371e3;
+                const dLat = toRad(loc2.lat - loc1.lat);
+                const dLon = toRad(loc2.lon - loc1.lon);
+                const a = Math.sin(dLat / 2) ** 2 +
+                          Math.cos(toRad(loc1.lat)) * Math.cos(toRad(loc2.lat)) *
+                          Math.sin(dLon / 2) ** 2;
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
+              })(userLocation, targetLocation)
+            );
+
+            const payload = {
+              contract,
+              location: userLocation,
+              distance
+            };
+
+            fetch("/capture?id=" + id, {
+              method: "POST",
+              body: JSON.stringify(payload),
+              headers: { "Content-Type": "application/json" }
+            }).then(async (response) => {
+              if (!response.ok) {
+                const errorText = await response.text();
+                alert("Capture failed.\\n" +
+                      "Your location: (" + payload.location.lat.toFixed(6) + ", " + payload.location.lon.toFixed(6) + ")\\n" +
+                      errorText);
+              } else {
+                window.location.replace("/confirm");
+              }
+            }).catch((err) => {
+              alert("Unexpected error submitting contract: " + err.message);
+            });
+          }, (error) => {
+            alert("Geolocation is required to capture this flag.\\n\\n" +
+                  "Error: " + error.message + "\\n" +
+                  "Please enable location access in your browser settings and reload the page.");
+          });
+        }
+      };
 
     /**
      * requestContract prompts the user to submit their team's contract to 
      * capture the flag, and then passes the result to the captureFlag function.
      * @param {Event} _event
      */
-    var requestContract = (_event) => {
-      let contract = prompt("Please enter your team's contract:");
-      captureFlag(contract)
-    }
+      const requestContract = () => {
+        const contract = prompt("Please enter your team's contract:");
+        captureFlag(contract);
+      };
 
     /**
      * Wait for the user to tap/click the 'Capture!' button on the page.
      */
-    document.querySelector("h2").addEventListener("click", requestContract)
-  </script>
+      document.querySelector("h2").addEventListener("click", requestContract);
+    </script>
+  </body> <!-- Moved /body tag to encompass JS code section due to button click (document.querySelector("h2") returning null. -GKT -->
 </html>
 `;
 
@@ -349,6 +402,60 @@ const resetPage = `
 `;
 
 /**
+ * FLAG_COORDS contains coordinates of each flag for geofencing. Adjust as needed. -GKT
+ */
+const FLAG_COORDS = {
+  "1": { lat: 30.4200, lon: -88.7736 },
+  "2": { lat: 30.4113, lon: -88.8278 },
+  "3": { lat: 37.7749, lon: -122.4194 },
+  "4": { lat: 41.8781, lon: -87.6298 },
+  "5": { lat: 29.7604, lon: -95.3698 },
+  "6": { lat: 33.4484, lon: -112.0740 },
+  "7": { lat: 39.7392, lon: -104.9903 },
+  "8": { lat: 32.7767, lon: -96.7970 },
+  "9": { lat: 47.6062, lon: -122.3321 },
+  "10": { lat: 38.9072, lon: -77.0369 },
+  "11": { lat: 42.3601, lon: -71.0589 },
+  "12": { lat: 36.1627, lon: -86.7816 },
+  "13": { lat: 45.5152, lon: -122.6784 },
+  "14": { lat: 39.9612, lon: -82.9988 },
+  "15": { lat: 30.2672, lon: -97.7431 },
+  "16": { lat: 25.7617, lon: -80.1918 },
+  "17": { lat: 35.2271, lon: -80.8431 },
+  "18": { lat: 33.7490, lon: -84.3880 }
+};
+
+/** calculateDistance shows the user's current distance from the specified flag. -GKT
+ */
+
+function calculateDistance(loc1, loc2) {
+  const toRad = (val) => val * Math.PI / 180;
+  const R = 6371e3; // meters
+  const dLat = toRad(loc2.lat - loc1.lat);
+  const dLon = toRad(loc2.lon - loc1.lon);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(loc1.lat)) * Math.cos(toRad(loc2.lat)) *
+            Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/* isWithinRadius compares user's current location to predefined flag coordinates.
+ * Flags can only be captured if user is within 50m of flag. -GKT
+ */
+function isWithinRadius(loc1, loc2, radiusMeters = 50) {
+  const toRad = (val) => val * Math.PI / 180;
+  const R = 6371e3; // Earth radius in meters
+  const dLat = toRad(loc2.lat - loc1.lat);
+  const dLon = toRad(loc2.lon - loc1.lon);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(loc1.lat)) * Math.cos(toRad(loc2.lat)) *
+            Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return calculateDistance(loc1, loc2) <= radiusMeters; // Return result of calculateDistance instead. -GKT
+}
+
+/**
  * getFlag consumes a request forwarded by the handleRequest() function
  * and supplies a dynamic Response containing a flagPage.
  * @param {Request} request
@@ -366,7 +473,9 @@ async function getFlag(request) {
 
   const body = flagPage(flag);
   return new Response(body, {
-    headers: { "Content-Type": "text/html" },
+    headers: { "Content-Type": "text/html",
+    "Permissions-Policy": "geolocation=(self)" // Added Permissions-Policy header for mobile browser compatibility (especially Safari). -GKT
+    },
   });
 }
 
@@ -381,30 +490,60 @@ async function captureFlag(request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    const contract = await request.text();
-    const flag = await FLAGS.get(id, { type: "json" });
-    let winner;
-    if (flag.winner) {
-      winner = flag.winner;
-    } else {
-      winner = await check(contract, id);
+
+    const json = await request.json();
+    const contract = json.contract;
+    const location = json.location;
+
+    const target = FLAG_COORDS[id];
+
+    // Check for missing location data
+    if (!location || !target) {
+      return new Response("Missing geolocation data or invalid flag ID.", {
+        status: 400,
+      });
     }
+
+    // Calculate distance from user to flag
+    const distance = calculateDistance(location, target);
+
+    // Check geofence radius (50 meters)
+    if (!isWithinRadius(location, target)) {
+      return new Response(
+        `You are outside the allowed location to capture this flag.\nDistance: ${Math.round(distance)} meters.`,
+        { status: 403 }
+      );
+    }
+
+    // Load flag data from KV
+    const flag = await FLAGS.get(id, { type: "json" });
+    if (!flag) {
+      return new Response("Flag not found in KV store.", { status: 404 });
+    }
+
+    // Determine winner if not already set
+    let winner = flag.winner ? flag.winner : await check(contract, id);
+
+    // Update KV store with new contract
     await FLAGS.put(
       id,
       JSON.stringify({
         name: flag.name,
         times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
-        contracts: flag.contracts.concat(contract),
+        //contracts: flag.contracts.concat(contract),
+        contracts: flag.contracts.concat(`${contract} (Location: ${location.lat.toFixed(5)}, ${location.lon.toFixed(5)} | Distance from target: ${Math.round(distance)}m)`), // Replace this with the previous line to not display location data on scoreboard. -GKT
         red: flag.red,
         blue: flag.blue,
         winner: winner,
       })
     );
+
     return new Response(null, { status: 200 });
   } catch (err) {
-    return new Response(err, { status: 500 });
+    return new Response("Error: " + err.toString(), { status: 500 });
   }
 }
+
 
 /**
  * check consumes a contract statement and flag ID from the captureFlag()
