@@ -402,27 +402,27 @@ const resetPage = `
 `;
 
 /**
- * FLAG_COORDS contains coordinates of each flag for geofencing. Adjust as needed. -GKT
+ * FLAG_COORDS contains (updated*) coordinates of each flag for geofencing. Adjust as needed. -GKT
  */
 const FLAG_COORDS = {
-  "1": { lat: 30.4200, lon: -88.7736 },
-  "2": { lat: 30.4113, lon: -88.8278 },
-  "3": { lat: 37.7749, lon: -122.4194 },
-  "4": { lat: 41.8781, lon: -87.6298 },
-  "5": { lat: 29.7604, lon: -95.3698 },
-  "6": { lat: 33.4484, lon: -112.0740 },
-  "7": { lat: 39.7392, lon: -104.9903 },
-  "8": { lat: 32.7767, lon: -96.7970 },
-  "9": { lat: 47.6062, lon: -122.3321 },
-  "10": { lat: 38.9072, lon: -77.0369 },
-  "11": { lat: 42.3601, lon: -71.0589 },
-  "12": { lat: 36.1627, lon: -86.7816 },
-  "13": { lat: 45.5152, lon: -122.6784 },
-  "14": { lat: 39.9612, lon: -82.9988 },
-  "15": { lat: 30.2672, lon: -97.7431 },
-  "16": { lat: 25.7617, lon: -80.1918 },
-  "17": { lat: 35.2271, lon: -80.8431 },
-  "18": { lat: 33.7490, lon: -84.3880 }
+  "1": { lat: 30.4200, lon: -88.7736 }, // Broncos - Fake coords for testing. When ready, update to 30.4062, -88.9197 *
+  "2": { lat: 30.4113, lon: -88.8278 }, // Buccaneers - Fake coords for testing. When ready, update to 30.4163, -88.9237 *
+  "3": { lat: 30.4148, lon: -88.9170 }, // Chargers *
+  "4": { lat: 30.4126, lon: -88.9131 }, // Chiefs *
+  "5": { lat: 30.4049, lon: -88.9123 }, // Commanders *
+  "6": { lat: 30.4006, lon: -88.9139 }, // Cowboys *
+  "7": { lat: 30.4100, lon: -88.9132 }, // Dolphins *
+  "8": { lat: 30.4081, lon: -88.9191 }, // Eagles *
+  "9": { lat: 30.4010, lon: -88.9284 }, // Giants *
+  "10": { lat: 30.4112, lon: -88.9127 }, // Jaguars *
+  "11": { lat: 30.4089, lon: -88.9063 }, // Jets *
+  "12": { lat: 30.4137, lon: -88.9094 }, // Patriots *
+  "13": { lat: 30.4089, lon: -88.9132 }, // Ravens *
+  "14": { lat: 30.3987, lon: -88.9293 }, // Saints *
+  "15": { lat: 30.4051, lon: -88.9098 }, // Seahawks *
+  "16": { lat: 30.4105, lon: -88.9107 }, // Texans *
+  "17": { lat: 30.4003, lon: -88.9282 }, // Titans *
+  "18": { lat: 30.3995, lon: -88.9109 }  // Vikings *
 };
 
 /** calculateDistance shows the user's current distance from the specified flag. -GKT
