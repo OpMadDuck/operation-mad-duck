@@ -16,3 +16,39 @@ When developing this project locally, [Miniflare](https://miniflare.dev) is the 
 
 ### Recommendations
 The `dev` branch is a work-in-progress of migrating the project to an [ACID](https://en.wikipedia.org/wiki/ACID)-compliant framework. This will hopefully fix the issue where logged-contracts can sometimes overwrite each other. Instead of storing flag data an contract logs under the ID for each flag, it is better to store the contracts atomically. The code in the `dev` branch aims to accomplish this by storing contracts in the KV with: the contract statement, a team designation, and the flag id. The scoreboard should then compare these stored contracts with a static array of flag objects to determine realized point values and successfully logged contracts.
+
+## New Features in This Fork
+
+### Geolocation-Based Flag Capture
+- Players must physically be within **50 meters** of a flag’s real-world coordinates to capture it.
+- Coordinates are stored per-flag in a central `FLAG_COORDS` dictionary.
+- Distance is calculated on the server using the haversine formula to ensure integrity.
+
+### Location Feedback
+- If users are outside the allowed range, an alert displays:
+  - Their **current coordinates**
+  - The **exact distance** from the flag
+  - A message that capture failed
+
+### ⚠Secure Origin Enforcement
+- Chrome, Firefox, and Safari require secure contexts for geolocation access.
+- Use `npx wrangler dev --ip=0.0.0.0 --port=8787` locally and access via `https://` (e.g., via Cloudflare Tunnel or HTTPS proxy) for mobile device testing.
+
+### XSS-Protected Contract Display
+- All contracts shown on the scoreboard are sanitized using a custom `escapeHtml()` function.
+- Properly captured contracts are **bolded**, incorrect ones are **italicized**.
+
+---
+
+## Developer Notes
+
+### Code Differences vs. Original
+
+| Area | Original | This Fork |
+|------|----------|-----------|
+| `flagPage()` | Basic click handler | Includes geolocation prompt, error feedback, and enhanced alert |
+| `captureFlag()` | Only contract body | Adds full geolocation payload and distance check |
+| `boardPage()` | Direct rendering | Now sanitizes input via `escapeHtml()` |
+| `getFlag()` | No headers | Adds `Permissions-Policy` for location access |
+| New Functions | X | `calculateDistance()`, `isWithinRadius()`, `escapeHtml()` |
+
