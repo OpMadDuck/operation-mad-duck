@@ -16,3 +16,6 @@ When developing this project locally, [Miniflare](https://miniflare.dev) is the 
 
 ### Recommendations
 The `dev` branch is a work-in-progress of migrating the project to an [ACID](https://en.wikipedia.org/wiki/ACID)-compliant framework. This will hopefully fix the issue where logged-contracts can sometimes overwrite each other. Instead of storing flag data an contract logs under the ID for each flag, it is better to store the contracts atomically. The code in the `dev` branch aims to accomplish this by storing contracts in the KV with: the contract statement, a team designation, and the flag id. The scoreboard should then compare these stored contracts with a static array of flag objects to determine realized point values and successfully logged contracts.
+
+### Testing, Testing
+1, 2, 3, 4...
