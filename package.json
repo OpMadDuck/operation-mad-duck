@@ -4,7 +4,7 @@
   "description": "a Cloudflare Workers program for OMD",
   "main": "worker.js",
   "devDependencies": {
-    "miniflare": "^2.2.0"
+    "miniflare": "^2.14.4"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
