@@ -1,8 +1,7 @@
-name = "mad-duck-dev"
+name = "development"
 main = "worker.js"
 compatibility_date = "2025-08-04"
 
 [[kv_namespaces]]
 binding = "FLAGS"
-id = "dummy-id"
-preview_id = "dummy-preview-id"
+id = "31c2f3fc8cc24d39a4741effb48513ba"
