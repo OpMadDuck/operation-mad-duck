@@ -312,7 +312,7 @@ const resetPage = `
           }
         })
       } else {
-        alert("Please enter RESETMADDUCK in all caps.")
+        alert("Please enter instructor password.")
       }
     }
 
@@ -322,7 +322,7 @@ const resetPage = `
      * @param {Event} _event
      */
     var requestConfirmation = (_event) => {
-      let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
+      let confirmation = prompt("Please enter instructor password to reset the scoreboard:");
       reset(confirmation)
     }
 
