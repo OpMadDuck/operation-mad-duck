@@ -405,24 +405,24 @@ const resetPage = `
  * FLAG_COORDS contains (updated*) coordinates of each flag for geofencing. Adjust as needed. -GKT
  */
 const FLAG_COORDS = {
-  "1": { lat: 30.4200, lon: -88.7736 }, // Broncos - Fake coords for testing. When ready, update to 30.4062, -88.9197 *
-  "2": { lat: 30.4113, lon: -88.8278 }, // Buccaneers - Fake coords for testing. When ready, update to 30.4163, -88.9237 *
-  "3": { lat: 30.4148, lon: -88.9170 }, // Chargers *
-  "4": { lat: 30.4126, lon: -88.9131 }, // Chiefs *
-  "5": { lat: 30.4049, lon: -88.9123 }, // Commanders *
-  "6": { lat: 30.4006, lon: -88.9139 }, // Cowboys *
-  "7": { lat: 30.4100, lon: -88.9132 }, // Dolphins *
-  "8": { lat: 30.4081, lon: -88.9191 }, // Eagles *
-  "9": { lat: 30.4010, lon: -88.9284 }, // Giants *
-  "10": { lat: 30.4112, lon: -88.9127 }, // Jaguars *
-  "11": { lat: 30.4089, lon: -88.9063 }, // Jets *
-  "12": { lat: 30.4137, lon: -88.9094 }, // Patriots *
-  "13": { lat: 30.4089, lon: -88.9132 }, // Ravens *
-  "14": { lat: 30.3987, lon: -88.9293 }, // Saints *
-  "15": { lat: 30.4051, lon: -88.9098 }, // Seahawks *
-  "16": { lat: 30.4105, lon: -88.9107 }, // Texans *
-  "17": { lat: 30.4003, lon: -88.9282 }, // Titans *
-  "18": { lat: 30.3995, lon: -88.9109 }  // Vikings *
+  "1": { lat: 30.4062, lon: -88.9197 }, // Broncos
+  "2": { lat: 30.4163, lon: -88.9237 }, // Buccaneers
+  "3": { lat: 30.4148, lon: -88.9170 }, // Chargers 
+  "4": { lat: 30.4126, lon: -88.9131 }, // Chiefs 
+  "5": { lat: 30.4049, lon: -88.9123 }, // Commanders 
+  "6": { lat: 30.4006, lon: -88.9139 }, // Cowboys 
+  "7": { lat: 30.4100, lon: -88.9132 }, // Dolphins 
+  "8": { lat: 30.4081, lon: -88.9191 }, // Eagles 
+  "9": { lat: 30.4010, lon: -88.9284 }, // Giants 
+  "10": { lat: 30.4112, lon: -88.9127 }, // Jaguars 
+  "11": { lat: 30.4089, lon: -88.9063 }, // Jets 
+  "12": { lat: 30.4137, lon: -88.9094 }, // Patriots 
+  "13": { lat: 30.4089, lon: -88.9132 }, // Ravens 
+  "14": { lat: 30.3987, lon: -88.9293 }, // Saints 
+  "15": { lat: 30.4051, lon: -88.9098 }, // Seahawks 
+  "16": { lat: 30.4105, lon: -88.9107 }, // Texans 
+  "17": { lat: 30.4003, lon: -88.9282 }, // Titanss
+  "18": { lat: 30.3995, lon: -88.9109 }  // Vikings
 };
 
 /** calculateDistance shows the user's current distance from the specified flag. -GKT
@@ -464,7 +464,7 @@ function isWithinRadius(loc1, loc2, radiusMeters = 50) {
 async function getFlag(request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
-  const flag = await FLAGS.get(id.toString(), { type: "json" });
+  const flag = await env.FLAGS.get(id.toString(), { type: "json" });
   if (flag === null) {
     return new Response("The requested resource could not be found 🦆", {
       status: 404,
@@ -516,7 +516,7 @@ async function captureFlag(request) {
     }
 
     // Load flag data from KV
-    const flag = await FLAGS.get(id, { type: "json" });
+    const flag = await env.FLAGS.get(id, { type: "json" });
     if (!flag) {
       return new Response("Flag not found in KV store.", { status: 404 });
     }
@@ -525,7 +525,7 @@ async function captureFlag(request) {
     let winner = flag.winner ? flag.winner : await check(contract, id);
 
     // Update KV store with new contract
-    await FLAGS.put(
+    await env.FLAGS.put(
       id,
       JSON.stringify({
         name: flag.name,
@@ -554,7 +554,7 @@ async function captureFlag(request) {
  * @returns {String} winningTeam,winningContract
  */
 async function check(contract, id) {
-  const flag = await FLAGS.get(id, { type: "json" });
+  const flag = await env.FLAGS.get(id, { type: "json" });
   const redExp = new RegExp(
     `Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
     "i"
@@ -582,7 +582,7 @@ async function getBoard() {
   const promises = [];
 
   for (const key of Array(18).keys()) {
-    promises.push(FLAGS.get((key + 1).toString(), { type: "json" }));
+    promises.push(env.FLAGS.get((key + 1).toString(), { type: "json" }));
   }
 
   const data = await Promise.all(promises);
@@ -603,75 +603,75 @@ async function resetBoard(request) {
   if (request.method === "POST") {
     const confirmation = await request.text();
     if (confirmation === "RESETMADDUCK") {
-      await FLAGS.put(
+      await env.FLAGS.put(
         "1",
         '{"name":"Broncos", "times":[], "contracts":[], "red":800, "blue":800, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "2",
         '{"name":"Buccaneers", "times":[], "contracts":[], "red":0, "blue":1200, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "3",
         '{"name":"Chargers", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "4",
         '{"name":"Chiefs", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "5",
         '{"name":"Commanders", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "6",
         '{"name":"Cowboys", "times":[], "contracts":[], "red":600, "blue":400, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "7",
         '{"name":"Dolphins", "times":[], "contracts":[], "red":600, "blue":600, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "8",
         '{"name":"Eagles", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "9",
         '{"name":"Giants", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "10",
         '{"name":"Jaguars", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "11",
         '{"name":"Jets", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "12",
         '{"name":"Patriots", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "13",
         '{"name":"Ravens", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "14",
         '{"name":"Saints", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "15",
         '{"name":"Seahawks", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "16",
         '{"name":"Texans", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "17",
         '{"name":"Titans", "times":[], "contracts":[], "red":1200, "blue":600, "winner":null}'
       );
-      await FLAGS.put(
+      await env.FLAGS.put(
         "18",
         '{"name":"Vikings", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
       );
@@ -729,7 +729,10 @@ async function handleRequest(request) {
 /**
  * Listen for a fetch event. When such an event occurs, respond with
  * the data provided by the handleRequest() function above.
+ * Updated syntax to help with Cloudflare build. -GKT
  */
-addEventListener("fetch", (event) => {
-  event.respondWith(handleRequest(event.request));
-});
+export default {
+  async fetch(request, env, ctx) {
+    return handleRequest(request, env, ctx);
+  }
+}
