@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/willswire/operation-mad-duck/issues"
   },
-  "homepage": "https://github.com/willswire/operation-mad-duck#readme"
+  "homepage": "https://github.com/willswire/operation-mad-duck#readme",
+  "dependencies": {
+    "wrangler": "^4.28.0"
+  }
 }
