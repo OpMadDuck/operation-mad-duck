@@ -460,8 +460,9 @@ function isWithinRadius(loc1, loc2, radiusMeters = 50) {
  * and supplies a dynamic Response containing a flagPage.
  * @param {Request} request
  * @returns {Response}
+ * Updated scope for env. -GKT
  */
-async function getFlag(request) {
+async function getFlag(request, env) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   const flag = await env.FLAGS.get(id.toString(), { type: "json" });
@@ -485,8 +486,9 @@ async function getFlag(request) {
  * After passing all required checks, data is updated in the KV store.
  * @param {Request} request
  * @returns {Response}
+ * Updated scope for env. -GKT
  */
-async function captureFlag(request) {
+async function captureFlag(request, env) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -522,7 +524,7 @@ async function captureFlag(request) {
     }
 
     // Determine winner if not already set
-    let winner = flag.winner ? flag.winner : await check(contract, id);
+    let winner = flag.winner ? flag.winner : await check(contract, id, env);
 
     // Update KV store with new contract
     await env.FLAGS.put(
@@ -553,7 +555,7 @@ async function captureFlag(request) {
  * @param {String} id
  * @returns {String} winningTeam,winningContract
  */
-async function check(contract, id) {
+async function check(contract, id, env) {
   const flag = await env.FLAGS.get(id, { type: "json" });
   const redExp = new RegExp(
     `Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
@@ -577,8 +579,9 @@ async function check(contract, id) {
  * and returns a response with boardPage in the body. All data must be
  * retrieved from the KV store prior to issuing a Response.
  * @returns {Response}
+ * Updated scope for env. -GKT
  */
-async function getBoard() {
+async function getBoard(env) {
   const promises = [];
 
   for (const key of Array(18).keys()) {
@@ -598,8 +601,9 @@ async function getBoard() {
  * the game state. After passing all required checks, data is reset in the KV store.
  * @param {Request} request
  * @returns {Response}
+ * Updated scope for env. -GKT
  */
-async function resetBoard(request) {
+async function resetBoard(request, env) {
   if (request.method === "POST") {
     const confirmation = await request.text();
     if (confirmation === "RESETMADDUCK") {
@@ -703,20 +707,21 @@ async function confirmContract() {
  * a 404 Not Found response is issued to the user. Quack!
  * @param {Request} request
  * @returns {Response}
+ * Updated scope for env. -GKT
  */
-async function handleRequest(request) {
+async function handleRequest(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname;
 
   switch (path) {
     case "/flag":
-      return getFlag(request);
+      return getFlag(request, env);
     case "/capture":
-      return captureFlag(request);
+      return captureFlag(request, env);
     case "/board":
-      return getBoard();
+      return getBoard(env);
     case "/reset":
-      return resetBoard(request);
+      return resetBoard(request, env);
     case "/confirm":
       return confirmContract();
     default:
