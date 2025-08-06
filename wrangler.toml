@@ -1,0 +1,8 @@
+name = "mad-duck-dev"
+main = "worker.js"
+compatibility_date = "2025-08-04"
+
+[[kv_namespaces]]
+binding = "FLAGS"
+id = "dummy-id"
+preview_id = "dummy-preview-id"
