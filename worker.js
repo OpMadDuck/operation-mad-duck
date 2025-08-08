@@ -386,7 +386,7 @@ const resetPage = `
           }
         })
       } else {
-        alert("Please enter RESETMADDUCK in all caps.")
+        alert("Please enter instructor password.")
       }
     }
 
@@ -396,7 +396,7 @@ const resetPage = `
      * @param {Event} _event
      */
     var requestConfirmation = (_event) => {
-      let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
+      let confirmation = prompt("Please enter instructor password to reset the scoreboard:");
       reset(confirmation)
     }
 
@@ -606,7 +606,12 @@ async function getBoard(env) {
  * 
  * To update the point values for each flag, change the values in resetBoard below.
  * Once the scoreboard is reset, it will await contract submission and award the points 
- * listed below if all criteria are met. -GKT
+ * listed below if all criteria are met. 
+ * 
+ * The points can also be reset in the KV pairs section of the Cloudflare deployment. 
+ * These are the default/original values, so these values appear until a reset happens. 
+ * Once a reset happens, the KV pairs are overwritten with whatever is defined below. 
+ * Therefore, the values below SHOULD match the KV pair values, but don't necessarily have to. -GKT
  * 
  */
 async function resetBoard(request, env) {
@@ -616,11 +621,11 @@ async function resetBoard(request, env) {
 
   const confirmation = await request.text();
   if (confirmation !== "RESETMADDUCK") {
-    return new Response("Incorrect reset password", { status: 400 });
+    return new Response("Incorrect reset password.", { status: 400 });
   }
 
   const data = {
-    "1":  { name:"Broncos",    times:[], contracts:[], red:999,  blue:800,  winner:null },
+    "1":  { name:"Broncos",    times:[], contracts:[], red:800,  blue:800,  winner:null },
     "2":  { name:"Buccaneers", times:[], contracts:[], red:0,    blue:1200, winner:null },
     "3":  { name:"Chargers",   times:[], contracts:[], red:400,  blue:400,  winner:null },
     "4":  { name:"Chiefs",     times:[], contracts:[], red:800,  blue:200,  winner:null },
@@ -652,12 +657,22 @@ async function resetBoard(request, env) {
  * confirmContract will notify the user that their submitted
  * contract has been logged successfully by the Worker.
  * @returns {Response}
+ * 
+ * Added a redirect to the scoreboard upon successful
+ * contract submission. -GKT
  */
 async function confirmContract() {
-  return new Response("Contract received 💬", {
-    status: 200,
-    headers: { "Clear-Site-Data": "*" },
-  });
+  const html = `
+    <html>
+      <body>
+        <script>
+          alert("Contract received 💬 Click OK to be redirected to the scoreboard.");
+          window.location.href = "/board";
+        </script>
+      </body>
+    </html>
+  `;
+  return new Response(html, { headers: { "Content-Type": "text/html" } });
 }
 
 /**
