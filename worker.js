@@ -405,7 +405,7 @@ const resetPage = `
  * FLAG_COORDS contains (updated*) coordinates of each flag for geofencing. Adjust as needed. -GKT
  */
 const FLAG_COORDS = {
-  "1": { lat: 30.4062, lon: -88.9197 }, // Broncos
+  "1": { lat: 30.4200, lon: -88.7736 }, // Broncos lat: 30.4062, lon: -88.9197
   "2": { lat: 30.4163, lon: -88.9237 }, // Buccaneers
   "3": { lat: 30.4148, lon: -88.9170 }, // Chargers 
   "4": { lat: 30.4126, lon: -88.9131 }, // Chiefs 
@@ -440,8 +440,9 @@ function calculateDistance(loc1, loc2) {
   return R * c;
 }
 
-/* isWithinRadius compares user's current location to predefined flag coordinates.
- * Flags can only be captured if user is within 50m of flag. -GKT
+/** isWithinRadius compares user's current location to predefined flag coordinates.
+ * Flags can only be captured if user is within 50m of flag. 
+ * Update radiusMeters below to increase/decrease the geofence radius size. -GKT 
  */
 function isWithinRadius(loc1, loc2, radiusMeters = 50) {
   const toRad = (val) => val * Math.PI / 180;
@@ -602,6 +603,11 @@ async function getBoard(env) {
  * @param {Request} request
  * @returns {Response}
  * Updated scope for env. -GKT
+ * 
+ * To update the point values for each flag, change the values in resetBoard below.
+ * Once the scoreboard is reset, it will await contract submission and award the points 
+ * listed below if all criteria are met. -GKT
+ * 
  */
 async function resetBoard(request, env) {
   if (request.method === "POST") {
@@ -724,6 +730,7 @@ async function handleRequest(request, env, ctx) {
       return resetBoard(request, env);
     case "/confirm":
       return confirmContract();
+    case "/env": return new Response(await env.FLAGS.get("ENV") ?? "none"); // Debug -GKT
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
