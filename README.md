@@ -9,46 +9,79 @@ A CTF exercise designed to help UCWT students plan and execute a tactical operat
 
 ## Development
 ### Cloudflare
-This project is written in JavaScript and is built using two free Cloudflare products. Cloudflare Workers provides a [serverless](https://www.cloudflare.com/learning/serverless/what-is-serverless/) execution environment that allows you to create entire web applications without configuring, maintaining or paying for infrastructure. Scoreboard data is stored in [Workers KV](https://developers.cloudflare.com/workers/learning/how-kv-works/) - a global, low-latency, key-value data store.
+This project is written in JavaScript and is built using two free Cloudflare products:
+- **Cloudflare Workers** – provides a [serverless](https://www.cloudflare.com/learning/serverless/what-is-serverless/) execution environment for web applications without managing infrastructure.
+- **Workers KV** – a global, low-latency, key-value data store used for storing scoreboard and contract data.
 
 ### Environment
-When developing this project locally, [Miniflare](https://miniflare.dev) is the preferred method of testing new code/features. You must have Node Package Manager (NPM) and the latest version of NodeJS installed on your system. If you would prefer not to configure a local development environment, check out [GitHub Codespaces](https://github.com/features/codespaces).  Clone this repository and run `npm run-script run` to stage a local copy of the project. Changes made locally will not affect the production instance of the code.
+When developing this project locally, [Miniflare](https://miniflare.dev) is the preferred method of testing new code/features. You must have Node Package Manager (NPM) and the latest version of NodeJS installed on your system.  
+If you would prefer not to configure a local environment, you can use [GitHub Codespaces](https://github.com/features/codespaces).  
+
+Clone this repository and run:
+```bash
+npm run-script run
+```
+to stage a local copy of the project. Changes made locally will **not** affect the production instance.
 
 ### Recommendations
-The `dev` branch is a work-in-progress of migrating the project to an [ACID](https://en.wikipedia.org/wiki/ACID)-compliant framework. This will hopefully fix the issue where logged-contracts can sometimes overwrite each other. Instead of storing flag data an contract logs under the ID for each flag, it is better to store the contracts atomically. The code in the `dev` branch aims to accomplish this by storing contracts in the KV with: the contract statement, a team designation, and the flag id. The scoreboard should then compare these stored contracts with a static array of flag objects to determine realized point values and successfully logged contracts.
+The `dev` branch is an in-progress migration toward an [ACID](https://en.wikipedia.org/wiki/ACID)-compliant data model. This will address the issue where logged contracts could overwrite each other by:
+- Storing contracts atomically with:  
+  - the contract statement  
+  - the team designation  
+  - the flag ID  
+- Computing scores from a **static array of flag objects** combined with stored contracts, ensuring integrity.
+
+---
 
 ## New Features in This Fork
 
 ### Geolocation-Based Flag Capture
-- Players must physically be within **50 meters** of a flag’s real-world coordinates to capture it.
+- Players must be physically within **50 meters** of a flag’s real-world coordinates to capture it.
 - Coordinates are stored per-flag in a central `FLAG_COORDS` dictionary.
-- Distance is calculated on the server using the haversine formula to ensure integrity.
+- Distance is calculated on the server using the **haversine formula** to prevent client-side tampering.
 
 ### Location Feedback
-- If users are outside the allowed range, an alert displays:
+- If users are outside the allowed radius, an alert displays:
   - Their **current coordinates**
-  - The **exact distance** from the flag
-  - A message that capture failed
+  - The **exact distance** to the flag
+  - A clear “capture failed” message
 
-### ⚠Secure Origin Enforcement
-- Chrome, Firefox, and Safari require secure contexts for geolocation access.
-- Use `npx wrangler dev --ip=0.0.0.0 --port=8787` locally and access via `https://` (e.g., via Cloudflare Tunnel or HTTPS proxy) for mobile device testing.
+### Secure Origin Enforcement
+- Geolocation requires a secure context (HTTPS).
+- Use:
+  ```bash
+  npx wrangler dev --ip=0.0.0.0 --port=8787
+  ```
+  with Cloudflare Tunnel or another HTTPS proxy for mobile testing.
 
 ### XSS-Protected Contract Display
-- All contracts shown on the scoreboard are sanitized using a custom `escapeHtml()` function.
-- Properly captured contracts are **bolded**, incorrect ones are **italicized**.
+- All contract text is sanitized with a custom `escapeHtml()` function.
+- Correctly captured contracts are **bolded**, incorrect ones are *italicized*.
+
+### Redirect After Successful Capture
+- Upon positive contract verification, the user is automatically redirected to the scoreboard.
+
+### Instructor-Only Scoreboard Reset
+- The reset dialog no longer shows the reset key in plaintext, ensuring only the instructor can reset scores.
 
 ---
 
 ## Developer Notes
 
+### Modifying Point Values
+- Modify values for desired flag in resetBoard() function of worker.js
+  - This will update the Key-Value (KV) pair data on Cloudflare when a reset is conducted
+- Modify values for desired flag on Cloudflare dashboard > (application_name) > Bindings > Flags-Dev > View
+- If values between these two products don't match, the KV pair value will be used initially, then the worker.js resetBoard() value will be used once a reset is conducted
+
 ### Code Differences vs. Original
 
 | Area | Original | This Fork |
 |------|----------|-----------|
-| `flagPage()` | Basic click handler | Includes geolocation prompt, error feedback, and enhanced alert |
-| `captureFlag()` | Only contract body | Adds full geolocation payload and distance check |
-| `boardPage()` | Direct rendering | Now sanitizes input via `escapeHtml()` |
-| `getFlag()` | No headers | Adds `Permissions-Policy` for location access |
-| New Functions | X | `calculateDistance()`, `isWithinRadius()`, `escapeHtml()` |
-
+| `flagPage()` | Basic click handler | Geolocation prompt, error feedback, enhanced alerts |
+| `captureFlag()` | Contract body only | Full geolocation payload + distance validation |
+| `boardPage()` | Direct rendering | Sanitizes contract text with `escapeHtml()` |
+| `getFlag()` | No special headers | Adds `Permissions-Policy` for location access |
+| Reset Logic | Always accessible | Protected by instructor-only UI |
+| Post-Capture Flow | Static confirmation | Alert + redirect to scoreboard |
+| New Functions | N/A | `calculateDistance()`, `isWithinRadius()`, `escapeHtml()` |
