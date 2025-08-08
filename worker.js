@@ -128,13 +128,20 @@ const flagPage = (flag) => `
           console.log("About to ask for location...");
           navigator.geolocation.getCurrentPosition((position) => {
 
-            /** Include the user's location and distance from the flag in contract logs. -GKT
-            */
+            // Include the user's location and distance from the flag in contract logs. -GKT
             const userLocation = {
               lat: position.coords.latitude,
               lon: position.coords.longitude
             };
-            const targetLocation = ${JSON.stringify(FLAG_COORDS)}[id]; // inject FLAG_COORDS into the page
+            const targetLocation = ${JSON.stringify(FLAG_COORDS)}; // Inject FLAG_COORDS into the page -GKT
+            const target = targetLocation[id]; // Updated to prevent stringify errors? -GKT
+
+            // Gives user error if bad QR code is scanned prior to geolocation math. -GKT
+            if (!id || !target) {
+              alert("Invalid flag ID.");
+              return;
+            }
+
             const distance = Math.round(
               (function calculateDistance(loc1, loc2) {
                 const toRad = (val) => val * Math.PI / 180;
@@ -146,7 +153,7 @@ const flagPage = (flag) => `
                           Math.sin(dLon / 2) ** 2;
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
                 return R * c;
-              })(userLocation, targetLocation)
+              })(userLocation, target)
             );
 
             const payload = {
@@ -445,14 +452,6 @@ function calculateDistance(loc1, loc2) {
  * Update radiusMeters below to increase/decrease the geofence radius size. -GKT 
  */
 function isWithinRadius(loc1, loc2, radiusMeters = 50) {
-  const toRad = (val) => val * Math.PI / 180;
-  const R = 6371e3; // Earth radius in meters
-  const dLat = toRad(loc2.lat - loc1.lat);
-  const dLon = toRad(loc2.lon - loc1.lon);
-  const a = Math.sin(dLat / 2) ** 2 +
-            Math.cos(toRad(loc1.lat)) * Math.cos(toRad(loc2.lat)) *
-            Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return calculateDistance(loc1, loc2) <= radiusMeters; // Return result of calculateDistance instead. -GKT
 }
 
@@ -466,17 +465,15 @@ function isWithinRadius(loc1, loc2, radiusMeters = 50) {
 async function getFlag(request, env) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
+  if (!id) return new Response("Missing id", { status: 400 });
+
   const flag = await env.FLAGS.get(id.toString(), { type: "json" });
-  if (flag === null) {
-    return new Response("The requested resource could not be found 🦆", {
-      status: 404,
-    });
-  }
+  if (!flag) return new Response("The requested resource could not be found 🦆", { status: 404 });
 
   const body = flagPage(flag);
   return new Response(body, {
     headers: { "Content-Type": "text/html",
-    "Permissions-Policy": "geolocation=(self)" // Added Permissions-Policy header for mobile browser compatibility (especially Safari). -GKT
+    "Permissions-Policy": "geolocation=self" // Added Permissions-Policy header for mobile browser compatibility (especially Safari). -GKT
     },
   });
 }
@@ -547,6 +544,14 @@ async function captureFlag(request, env) {
   }
 }
 
+/**
+ * escapeRegExp performs contract input validation for consistent contracts. -GKT
+ */
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 
 /**
  * check consumes a contract statement and flag ID from the captureFlag()
@@ -558,21 +563,16 @@ async function captureFlag(request, env) {
  */
 async function check(contract, id, env) {
   const flag = await env.FLAGS.get(id, { type: "json" });
-  const redExp = new RegExp(
-    `Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
-    "i"
-  );
-  const blueExp = new RegExp(
-    `Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
-    "i"
-  );
-  if (redExp.test(contract)) {
-    return "red," + flag.contracts.length;
-  } else if (blueExp.test(contract)) {
-    return "blue," + flag.contracts.length;
-  } else {
-    return null;
-  }
+  // Updated variables below for more consistent regex checks via escapeRegExp(). -GKT
+  const safeName = escapeRegExp(flag.name);
+  const redExp  = new RegExp(`Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${safeName}`, "i");
+  const blueExp = new RegExp(`Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${safeName}`, "i");
+
+  const idx = Array.isArray(flag.contracts) ? flag.contracts.length : 0;
+
+  if (redExp.test(contract))  return "red," + idx;
+  if (blueExp.test(contract)) return "blue," + idx;
+  return null;
 }
 
 /**
@@ -610,89 +610,62 @@ async function getBoard(env) {
  * 
  */
 async function resetBoard(request, env) {
-  if (request.method === "POST") {
-    const confirmation = await request.text();
-    if (confirmation === "RESETMADDUCK") {
-      await env.FLAGS.put(
-        "1",
-        '{"name":"Broncos", "times":[], "contracts":[], "red":800, "blue":800, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "2",
-        '{"name":"Buccaneers", "times":[], "contracts":[], "red":0, "blue":1200, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "3",
-        '{"name":"Chargers", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "4",
-        '{"name":"Chiefs", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "5",
-        '{"name":"Commanders", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "6",
-        '{"name":"Cowboys", "times":[], "contracts":[], "red":600, "blue":400, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "7",
-        '{"name":"Dolphins", "times":[], "contracts":[], "red":600, "blue":600, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "8",
-        '{"name":"Eagles", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "9",
-        '{"name":"Giants", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "10",
-        '{"name":"Jaguars", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "11",
-        '{"name":"Jets", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "12",
-        '{"name":"Patriots", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "13",
-        '{"name":"Ravens", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "14",
-        '{"name":"Saints", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "15",
-        '{"name":"Seahawks", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "16",
-        '{"name":"Texans", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "17",
-        '{"name":"Titans", "times":[], "contracts":[], "red":1200, "blue":600, "winner":null}'
-      );
-      await env.FLAGS.put(
-        "18",
-        '{"name":"Vikings", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
-      );
-      return new Response(null, { status: 200 });
-    }
-  } else {
-    return new Response(resetPage, {
-      headers: { "Content-Type": "text/html" },
-    });
+  // 1) Dev-only guard, protects against accidental prod environment changes
+  if (env.DEV_ONLY !== "true") {
+    return new Response("Reset disabled", { status: 403 });
   }
-}
+
+  // 2) KV canary: refuse to run unless bound to the DEV KV
+  const canary = await env.FLAGS.get("ENV");
+  if (canary !== "dev") {
+    return new Response("KV mismatch (not DEV). Refusing to reset.", { status: 409 });
+  }
+
+  // 3) Show form unless POST
+  if (request.method !== "POST") {
+    return new Response(resetPage, { headers: { "Content-Type": "text/html" } });
+  }
+
+  // 4) Confirm
+  const confirmation = await request.text();
+  if (confirmation !== "RESETMADDUCK") {
+    return new Response("Incorrect reset password", { status: 400 });
+  }
+
+  // 5) Do the reset
+  const data = {
+    "1":  { name:"Broncos",    times:[], contracts:[], red:800,  blue:800,  winner:null },
+    "2":  { name:"Buccaneers", times:[], contracts:[], red:0,    blue:1200, winner:null },
+    "3":  { name:"Chargers",   times:[], contracts:[], red:400,  blue:400,  winner:null },
+    "4":  { name:"Chiefs",     times:[], contracts:[], red:800,  blue:200,  winner:null },
+    "5":  { name:"Commanders", times:[], contracts:[], red:400,  blue:400,  winner:null },
+    "6":  { name:"Cowboys",    times:[], contracts:[], red:600,  blue:400,  winner:null },
+    "7":  { name:"Dolphins",   times:[], contracts:[], red:600,  blue:600,  winner:null },
+    "8":  { name:"Eagles",     times:[], contracts:[], red:400,  blue:400,  winner:null },
+    "9":  { name:"Giants",     times:[], contracts:[], red:200,  blue:600,  winner:null },
+    "10": { name:"Jaguars",    times:[], contracts:[], red:800,  blue:200,  winner:null },
+    "11": { name:"Jets",       times:[], contracts:[], red:200,  blue:200,  winner:null },
+    "12": { name:"Patriots",   times:[], contracts:[], red:800,  blue:200,  winner:null },
+    "13": { name:"Ravens",     times:[], contracts:[], red:200,  blue:200,  winner:null },
+    "14": { name:"Saints",     times:[], contracts:[], red:200,  blue:600,  winner:null },
+    "15": { name:"Seahawks",   times:[], contracts:[], red:800,  blue:200,  winner:null },
+    "16": { name:"Texans",     times:[], contracts:[], red:200,  blue:800,  winner:null },
+    "17": { name:"Titans",     times:[], contracts:[], red:1200, blue:600,  winner:null },
+    "18": { name:"Vikings",    times:[], contracts:[], red:200,  blue:800,  winner:null }
+  };
+
+  // Write in parallel
+  await Promise.all(
+    Object.entries(data).map(([k, v]) =>
+      env.FLAGS.put(k, JSON.stringify(v))
+    )
+  );
+
+  // Optional audit
+  await env.FLAGS.put("__last_reset", JSON.stringify({ when: Date.now(), worker: "dev" }));
+
+  return new Response(null, { status: 200 });
+}  
 
 /**
  * confirmContract will notify the user that their submitted
@@ -730,7 +703,14 @@ async function handleRequest(request, env, ctx) {
       return resetBoard(request, env);
     case "/confirm":
       return confirmContract();
-    case "/env": return new Response(await env.FLAGS.get("ENV") ?? "none"); // Debug -GKT
+    case "/env":   // Debug -GKT
+      return new Response(
+        JSON.stringify({
+          devOnly: env.DEV_ONLY,
+          kvEnv: await env.FLAGS.get("ENV"),
+        }),
+        { headers: { "content-type": "application/json" } }
+      ); 
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
