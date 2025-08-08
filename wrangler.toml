@@ -3,6 +3,10 @@ main = "worker.js"
 compatibility_date = "2025-08-04"
 type = "module"
 
+# Development environment. Update ID to "operation" environment ID when ready for migration.
 [[kv_namespaces]]
 binding = "FLAGS"
-id = "31c2f3fc8cc24d39a4741effb48513ba"
+id = "ae635740392a4962bbd823ee68b49b7d"
+
+[vars]
+DEV_ONLY = "true"
