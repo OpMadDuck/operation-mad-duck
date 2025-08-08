@@ -620,7 +620,7 @@ async function resetBoard(request, env) {
   }
 
   const data = {
-    "1":  { name:"Broncos",    times:[], contracts:[], red:800,  blue:800,  winner:null },
+    "1":  { name:"Broncos",    times:[], contracts:[], red:999,  blue:800,  winner:null },
     "2":  { name:"Buccaneers", times:[], contracts:[], red:0,    blue:1200, winner:null },
     "3":  { name:"Chargers",   times:[], contracts:[], red:400,  blue:400,  winner:null },
     "4":  { name:"Chiefs",     times:[], contracts:[], red:800,  blue:200,  winner:null },
