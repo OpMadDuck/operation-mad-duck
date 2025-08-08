@@ -610,29 +610,15 @@ async function getBoard(env) {
  * 
  */
 async function resetBoard(request, env) {
-  // 1) Dev-only guard, protects against accidental prod environment changes
-  if (env.DEV_ONLY !== "true") {
-    return new Response("Reset disabled", { status: 403 });
-  }
-
-  // 2) KV canary: refuse to run unless bound to the DEV KV
-  const canary = await env.FLAGS.get("ENV");
-  if (canary !== "dev") {
-    return new Response("KV mismatch (not DEV). Refusing to reset.", { status: 409 });
-  }
-
-  // 3) Show form unless POST
   if (request.method !== "POST") {
     return new Response(resetPage, { headers: { "Content-Type": "text/html" } });
   }
 
-  // 4) Confirm
   const confirmation = await request.text();
   if (confirmation !== "RESETMADDUCK") {
     return new Response("Incorrect reset password", { status: 400 });
   }
 
-  // 5) Do the reset
   const data = {
     "1":  { name:"Broncos",    times:[], contracts:[], red:800,  blue:800,  winner:null },
     "2":  { name:"Buccaneers", times:[], contracts:[], red:0,    blue:1200, winner:null },
@@ -654,18 +640,13 @@ async function resetBoard(request, env) {
     "18": { name:"Vikings",    times:[], contracts:[], red:200,  blue:800,  winner:null }
   };
 
-  // Write in parallel
-  await Promise.all(
-    Object.entries(data).map(([k, v]) =>
-      env.FLAGS.put(k, JSON.stringify(v))
-    )
-  );
-
-  // Optional audit
-  await env.FLAGS.put("__last_reset", JSON.stringify({ when: Date.now(), worker: "dev" }));
+  await Promise.all(Object.entries(data).map(([k, v]) =>
+    env.FLAGS.put(k, JSON.stringify(v))
+  ));
 
   return new Response(null, { status: 200 });
-}  
+}
+
 
 /**
  * confirmContract will notify the user that their submitted
@@ -703,14 +684,6 @@ async function handleRequest(request, env, ctx) {
       return resetBoard(request, env);
     case "/confirm":
       return confirmContract();
-    case "/env":   // Debug -GKT
-      return new Response(
-        JSON.stringify({
-          devOnly: env.DEV_ONLY,
-          kvEnv: await env.FLAGS.get("ENV"),
-        }),
-        { headers: { "content-type": "application/json" } }
-      ); 
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
