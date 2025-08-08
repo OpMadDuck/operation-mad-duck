@@ -662,17 +662,7 @@ async function resetBoard(request, env) {
  * contract submission. -GKT
  */
 async function confirmContract() {
-  const html = `
-    <html>
-      <body>
-        <script>
-          alert("Contract received 💬 Click OK to be redirected to the scoreboard.");
-          window.location.href = "/board";
-        </script>
-      </body>
-    </html>
-  `;
-  return new Response(html, { headers: { "Content-Type": "text/html" } });
+  return Response.redirect("https://gtbranch-development.madduck.workers.dev/board", 303);
 }
 
 /**
