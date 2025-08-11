@@ -7,12 +7,13 @@
  * [+] Added functionality to append user's current location data and distance from flag to scoreboard upon successful submission
  * [+] Added redirect to send user directly to scoreboard upon succesful contract submission for positive verification
  * [+] Remove password text from reset dialog box to ensure only the instructor can reset the scoreboard
+ * [+] Added color-coding for successful flag captures to make appearance more appealing
+ * [+] Added splashPage html variable and case for visiting / (instead of just a 404 like before)
  * 
  * [ ] To Do:
  * [ ] Find a way to push injects via scoreboard alerts?
  * [ ] Breadcrumb tracking?
  * [ ] Penalties based on inverse geofencing? Could have a /penalty page that users get redirected to if they enter fenced-off area that displays penalty timer and prevents contract submission via session cookie?
- * [ ] Can we color-code the contract submissions?
  */
 
 /**
@@ -438,6 +439,36 @@ const resetPage = `
 </html>
 `;
 
+
+/**
+ * splashPage returns a response body as a string. The response body contains
+ * a simple landing page for Operation Mad Duck with links to key game
+ * functions, such as viewing the scoreboard and capturing flags. It serves
+ * as the default page when visiting the root ("/") of the Worker. -GKT
+ */
+const splashPage = `
+<!DOCTYPE html>
+<html>
+<head>
+<title>Operation Mad Duck</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin-top: 10%; }
+  h1 { color: #333; }
+  a { display: inline-block; margin: 10px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+  a:hover { background: #0056b3; }
+</style>
+</head>
+<body>
+  <h1>Welcome to Operation Mad Duck</h1>
+  <p>Select an option below:</p>
+  <a href="/board">View Scoreboard</a>
+  <a href="/flag?id=1">Capture a Flag</a>
+</body>
+</html>
+`;
+
+
+
 /**
  * FLAG_COORDS contains (updated*) coordinates of each flag for geofencing. Adjust as needed. -GKT
  */
@@ -709,6 +740,10 @@ async function handleRequest(request, env, ctx) {
   const path = url.pathname;
 
   switch (path) {
+    case "/":
+      return new Response(splashPage, {
+        headers: { "Content-Type": "text/html" },
+      });
     case "/flag":
       return getFlag(request, env);
     case "/capture":
