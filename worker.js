@@ -312,6 +312,8 @@ const boardPage = (flags) => `
        * Keep both team and index for color-coded contract submissions. -GKT
        */
 
+      name.textContent = flag.name;
+
       // determine winner
       var winningTeam = null;
       var winningContractID = -1;
@@ -326,18 +328,26 @@ const boardPage = (flags) => `
         } else if (winningTeam === 'blue') {
           blue.textContent = String(flag.blue);
         }
+
+        // ★ Style the flag name cell to indicate winner
+        if (winningTeam === 'red') {
+          name.style.backgroundColor = 'rgb(255,0,0)';
+          name.style.color = '#fff';
+          name.style.fontWeight = '700';
+          name.textContent = '🏆 ' + flag.name;   // optional flair
+        } else if (winningTeam === 'blue') {
+          name.style.backgroundColor = 'rgb(0,0,255)';
+          name.style.color = '#fff';
+          name.style.fontWeight = '700';
+          name.textContent = '🏆 ' + flag.name;   // optional flair
+        }
       }
 
-      // render contracts
       for (var i = 0; i < flag.contracts.length; i++) {
         var isWinner = (i === winningContractID);
         var line = flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]);
 
-        if (isWinner && winningTeam === 'red') {
-          contracts.innerHTML += '<div style="background-color:rgb(255,0,0); font-weight:700;">' + line + '</div>';
-        } else if (isWinner && winningTeam === 'blue') {
-          contracts.innerHTML += '<div style="background-color:rgb(0,0,255); color:#fff; font-weight:700;">' + line + '</div>';
-        } else if (isWinner) {
+        if (isWinner) {
           contracts.innerHTML += '<strong>' + line + '</strong><br>';
         } else {
           contracts.innerHTML += '<em>' + line + '</em><br>';
