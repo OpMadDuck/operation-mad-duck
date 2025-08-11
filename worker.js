@@ -309,56 +309,38 @@ const boardPage = (flags) => `
        * which won this flag. Assign the correct point
        * value to the winning team and add it to the
        * total point value for the team.
+       * Keep both team and index for color-coded contract submissions. -GKT
        */
-      let winningContractID;
-      if(flag.winner) {
-        let winnerArray = flag.winner.split(',')
-        winningContractID = parseInt(winnerArray[1])
-        if (winnerArray[0] === 'red') {
-          redSum += flag.red
-          red.innerHTML = flag.red
-        } else if (winnerArray[0] === 'blue') {
-          blueSum += flag.blue
-          blue.innerHTML = flag.blue
+      let winningTeam = null;
+      let winningContractID = -1;
+
+      if (flag.winner) {
+        const [team, idxStr] = flag.winner.split(',');
+        winningTeam = team;                    // 'red' or 'blue'
+        winningContractID = Number(idxStr);    // index of winning contract
+        if (winningTeam === 'red') {
+          red.textContent = String(flag.red);
+        } else if (winningTeam === 'blue') {
+          blue.textContent = String(flag.blue);
         }
       }
 
-<!--
-      /**
-       * Style the contract log, italicizing the improper
-       * contracts, and bolding the proper/winning contract.
-       */
+      // render contracts
       for (let i = 0; i < flag.contracts.length; i++) {
-        if (i === winningContractID) {
-          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>'
+        const isWinner = i === winningContractID;
+        const line = `${flag.times[i]}Z - ${escapeHtml(flag.contracts[i])}`;
+
+        if (isWinner && winningTeam === 'red') {
+          contracts.innerHTML += `<div style="background-color:rgb(255,0,0); font-weight:700;">${line}</div>`;
+        } else if (isWinner && winningTeam === 'blue') {
+          contracts.innerHTML += `<div style="background-color:rgb(0,0,255); color:#fff; font-weight:700;">${line}</div>`;
+        } else if (isWinner) {
+          contracts.innerHTML += `<strong>${line}</strong><br>`;
         } else {
-          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>'
+          contracts.innerHTML += `<em>${line}</em><br>`;
         }
       }
--->
-      /**
-       * Style the contract log, italicizing the improper
-       * contracts, and bolding the proper/winning contract.
-       */
-      for (let i = 0; i < flag.contracts.length; i++) {
-        if (i === winningContractID) {
-          if (red.innerHTML === flag.red) {
-            contracts.innerHTML += '<strong><h1 style="background-color:rgb(255, 0, 0);">' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</h1></strong><br>' 
-          } else if (blue.innerHTML === flag.blue) {
-            contracts.innerHTML += '<strong><h1 style="background-color:rgb(0, 0, 255);">' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</h1></strong><br>' 
-          } else {
-            contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>' 
-          }
-        } else {
-          if (red.innerHTML === flag.red) {
-            contracts.innerHTML += '<em><h1 style="background-color:rgb(255, 0, 0);">' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</h1></em><br>' 
-          } else if (blue.innerHTML === flag.blue) {
-            contracts.innerHTML += '<em><h1 style="background-color:rgb(0, 0, 255);">' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</h1></em><br>' 
-          } else {
-            contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>' 
-          }
-        }
-      }
+
 
 
       /**
