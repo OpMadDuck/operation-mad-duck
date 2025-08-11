@@ -462,7 +462,7 @@ const splashPage = `
   <h1>Welcome to Operation Mad Duck</h1>
   <p>Select an option below:</p>
   <a href="/board">View Scoreboard</a>
-  <a href="/flag?id=1">Capture a Flag</a>
+  <a href="/reset">Reset Scoreboard</a>
 </body>
 </html>
 `;
