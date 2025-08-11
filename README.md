@@ -64,15 +64,19 @@ The `dev` branch is an in-progress migration toward an [ACID](https://en.wikiped
 ### Instructor-Only Scoreboard Reset
 - The reset dialog no longer shows the reset key in plaintext, ensuring only the instructor can reset scores.
 
+### Splash Page
+- Visiting `/` now returns a **splash page** with an overview of the CTF and a button to view the scoreboard.
+- The splash page HTML is embedded in the Worker and returned as the default route.
+
 ---
 
 ## Developer Notes
 
 ### Modifying Point Values
-- Modify values for desired flag in resetBoard() function of worker.js
+- Modify values for desired flag in `resetBoard()` function of `worker.js`
   - This will update the Key-Value (KV) pair data on Cloudflare when a reset is conducted
-- Modify values for desired flag on Cloudflare dashboard > (application_name) > Bindings > Flags-Dev > View
-- If values between these two products don't match, the KV pair value will be used initially, then the worker.js resetBoard() value will be used once a reset is conducted
+- Modify values for desired flag on Cloudflare dashboard → (application_name) → Bindings → `Flags-Dev` → View
+- If values between these two products don't match, the KV pair value will be used initially, then the `worker.js` `resetBoard()` value will be used once a reset is conducted
 
 ### Code Differences vs. Original
 
@@ -84,4 +88,5 @@ The `dev` branch is an in-progress migration toward an [ACID](https://en.wikiped
 | `getFlag()` | No special headers | Adds `Permissions-Policy` for location access |
 | Reset Logic | Always accessible | Protected by instructor-only UI |
 | Post-Capture Flow | Static confirmation | Alert + redirect to scoreboard |
+| Default Route | 404 | Splash page HTML with scoreboard link |
 | New Functions | N/A | `calculateDistance()`, `isWithinRadius()`, `escapeHtml()` |
