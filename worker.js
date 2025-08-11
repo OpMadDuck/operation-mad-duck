@@ -328,7 +328,7 @@ const boardPage = (flags) => `
       // render contracts
       for (let i = 0; i < flag.contracts.length; i++) {
         const isWinner = i === winningContractID;
-        const line = `${flag.times[i]}Z - ${escapeHtml(flag.contracts[i])}`;
+        const line = flag.times[i] + "Z - " + escapeHtml(flag.contracts[i]);
 
         if (isWinner && winningTeam === 'red') {
           contracts.innerHTML += `<div style="background-color:rgb(255,0,0); font-weight:700;">${line}</div>`;
