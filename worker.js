@@ -311,13 +311,16 @@ const boardPage = (flags) => `
        * total point value for the team.
        * Keep both team and index for color-coded contract submissions. -GKT
        */
-      let winningTeam = null;
-      let winningContractID = -1;
+
+      // determine winner
+      var winningTeam = null;
+      var winningContractID = -1;
 
       if (flag.winner) {
-        const [team, idxStr] = flag.winner.split(',');
-        winningTeam = team;                    // 'red' or 'blue'
-        winningContractID = Number(idxStr);    // index of winning contract
+        var parts = flag.winner.split(',');
+        winningTeam = parts[0];                 // 'red' or 'blue'
+        winningContractID = parseInt(parts[1], 10);
+
         if (winningTeam === 'red') {
           red.textContent = String(flag.red);
         } else if (winningTeam === 'blue') {
@@ -326,20 +329,21 @@ const boardPage = (flags) => `
       }
 
       // render contracts
-      for (let i = 0; i < flag.contracts.length; i++) {
-        const isWinner = i === winningContractID;
-        const line = flag.times[i] + "Z - " + escapeHtml(flag.contracts[i]);
+      for (var i = 0; i < flag.contracts.length; i++) {
+        var isWinner = (i === winningContractID);
+        var line = flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]);
 
         if (isWinner && winningTeam === 'red') {
-          contracts.innerHTML += `<div style="background-color:rgb(255,0,0); font-weight:700;">${line}</div>`;
+          contracts.innerHTML += '<div style="background-color:rgb(255,0,0); font-weight:700;">' + line + '</div>';
         } else if (isWinner && winningTeam === 'blue') {
-          contracts.innerHTML += `<div style="background-color:rgb(0,0,255); color:#fff; font-weight:700;">${line}</div>`;
+          contracts.innerHTML += '<div style="background-color:rgb(0,0,255); color:#fff; font-weight:700;">' + line + '</div>';
         } else if (isWinner) {
-          contracts.innerHTML += `<strong>${line}</strong><br>`;
+          contracts.innerHTML += '<strong>' + line + '</strong><br>';
         } else {
-          contracts.innerHTML += `<em>${line}</em><br>`;
+          contracts.innerHTML += '<em>' + line + '</em><br>';
         }
       }
+
 
 
 
