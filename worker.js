@@ -5,6 +5,14 @@
  * [++] NOTE: Geofencing will require users to allow mobile browser location permissions
  * [++] Recommend requiring users to test a QR code together in class prior to ROC drill
  * [+] Added functionality to append user's current location data and distance from flag to scoreboard upon successful submission
+ * [+] Added redirect to send user directly to scoreboard upon succesful contract submission for positive verification
+ * [+] Remove password text from reset dialog box to ensure only the instructor can reset the scoreboard
+ * 
+ * [ ] To Do:
+ * [ ] Find a way to push injects via scoreboard alerts?
+ * [ ] Breadcrumb tracking?
+ * [ ] Penalties based on inverse geofencing? Could have a /penalty page that users get redirected to if they enter fenced-off area that displays penalty timer and prevents contract submission via session cookie?
+ * [ ] Can we color-code the contract submissions?
  */
 
 /**
@@ -315,6 +323,7 @@ const boardPage = (flags) => `
         }
       }
 
+<!--
       /**
        * Style the contract log, italicizing the improper
        * contracts, and bolding the proper/winning contract.
@@ -326,6 +335,31 @@ const boardPage = (flags) => `
           contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>'
         }
       }
+-->
+      /**
+       * Style the contract log, italicizing the improper
+       * contracts, and bolding the proper/winning contract.
+       */
+      for (let i = 0; i < flag.contracts.length; i++) {
+        if (i === winningContractID) {
+          if (red.innerHTML === flag.red) {
+            contracts.innerHTML += '<strong><h1 style="background-color:rgb(255, 0, 0);">' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</h1></strong><br>' 
+          } else if (blue.innerHTML === flag.blue) {
+            contracts.innerHTML += '<strong><h1 style="background-color:rgb(0, 0, 255);">' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</h1></strong><br>' 
+          } else {
+            contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>' 
+          }
+        } else {
+          if (red.innerHTML === flag.red) {
+            contracts.innerHTML += '<em><h1 style="background-color:rgb(255, 0, 0);">' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</h1></em><br>' 
+          } else if (blue.innerHTML === flag.blue) {
+            contracts.innerHTML += '<em><h1 style="background-color:rgb(0, 0, 255);">' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</h1></em><br>' 
+          } else {
+            contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>' 
+          }
+        }
+      }
+
 
       /**
        * Append the newly loaded data into the table row
