@@ -9,6 +9,7 @@
  * [+] Remove password text from reset dialog box to ensure only the instructor can reset the scoreboard
  * [+] Added color-coding for successful flag captures to make appearance more appealing
  * [+] Added splashPage html variable and case for visiting / (instead of just a 404 like before)
+ * [+] Added buttons to enable inject points, which are now disabled by default
  * 
  * [ ] To Do:
  * [ ] Find a way to push injects via scoreboard alerts?
@@ -472,12 +473,12 @@ const injectPage = `
     function requestConfirmation(ev) {
       var el = ev.currentTarget;
       var type = el.getAttribute("data-type");
-      var confirmation = prompt("Please enter instructor password to inject the new point:");
+      var confirmation = prompt("Please enter instructor password to enable the new point:");
       if (!confirmation) return;
 
       var qs = "?type=" + encodeURIComponent(type);
       callInject(qs, confirmation).then(function(res) {
-        if (!res.ok) alert("HTTP Error " + res.status);
+        if (!res.ok) alert("Please enter instructor password.");
         else window.location.href = "/board";
       }).catch(function(err) {
         alert("Unexpected error: " + err.message);
@@ -514,9 +515,9 @@ const splashPage = `
 <body>
   <h1>Welcome to Operation Mad Duck</h1>
   <p>Select an option below:</p>
-  <a href="/board">View Scoreboard</a>
-  <a href="/reset">Reset Scoreboard</a>
-  <a href="/inject">Enable Injects</a>
+  <a href="/board">View Scoreboard</a><br>
+  <a href="/reset">Reset Scoreboard</a><br>
+  <a href="/inject">Enable Injects</a><br>
 </body>
 </html>
 `;
