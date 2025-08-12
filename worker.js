@@ -399,6 +399,7 @@ const resetPage = `
     <div class="container">
       <div class="subcontainer">
         <h2>Reset!</h2>
+        <h2>Test</h2>
       </div>
      </div>
   </body>
