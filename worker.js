@@ -860,8 +860,25 @@ async function handleRequest(request, env, ctx) {
       return resetBoard(request, env);
     case "/confirm":
       return confirmContract();
-    case "/inject":
-      return enableInject(request, env);
+    /** 
+     * The inject case is a little more complicated because enableInject() 
+     * modifies data on the server, whereas the other pages/functions are
+     * read-only. Therefore, /inject must use the POST method, whereas the
+     * other cases can use the GET method. -GKT
+     */
+    case "/inject": 
+      if (request.method === "GET") {
+        return new Response(injectPage, {
+          headers: { "Content-Type": "text/html" },
+        });
+      } else if (request.method === "POST") {
+        return enableInject(request, env);
+      } else {
+        return new Response("Method Not Allowed", {
+          status: 405,
+          headers: { "Allow": "GET, POST" },
+        });
+      }
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
