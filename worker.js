@@ -14,6 +14,7 @@
  * [ ] Find a way to push injects via scoreboard alerts?
  * [ ] Breadcrumb tracking?
  * [ ] Penalties based on inverse geofencing? Could have a /penalty page that users get redirected to if they enter fenced-off area that displays penalty timer and prevents contract submission via session cookie?
+ * [ ] Only show Chargers and Ravens on scoreboard after inject has been released
  */
 
 /**
@@ -315,7 +316,7 @@ const boardPage = (flags) => `
 
       name.textContent = flag.name;
 
-      // determine winner
+      // Determine winner
       var winningTeam = null;
       var winningContractID = -1;
 
@@ -330,7 +331,7 @@ const boardPage = (flags) => `
           blue.textContent = String(flag.blue);
         }
 
-        // ★ Style the flag name cell to indicate winner
+        // Style the flag name cell to indicate winner
         if (winningTeam === 'red') {
           name.style.backgroundColor = 'rgb(255,0,0)';
           name.style.color = '#fff';
@@ -439,6 +440,64 @@ const resetPage = `
 </html>
 `;
 
+const injectPage = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Operation Mad Duck | Injects</title>
+    ${style}
+  </head>
+  <body>
+    <div class="container">
+      <div class="subcontainer">
+        <h2>Enable Chargers Inject!</h2>
+        <h2>Enable Ravens Inject!</h2>
+      </div>
+     </div>
+  </body>
+  <script>
+    /**
+     * inject consumes a confirmation in the form of a String and enables a new
+     * flag capture point. If the server accepts the confirmation, the user will
+     * be redirected to the score board. If the server encounters an error, 
+     * then the user will be prompted to reattempt the inject.
+     * @param {String} confirmation
+     */
+    var inject = (confirmation) => {
+      if (confirmation === 'INJECTMADDUCK') {
+        fetch("/inject", { method: "POST", body: confirmation })
+        .then((response) => {
+          if (!response.ok) {
+            alert("HTTP Error " + response.status + ". Please try again.");
+          } else {
+            window.location.href = "/board";
+          }
+        })
+      } else {
+        alert("Please enter instructor password.")
+      }
+    }
+
+    /**
+     * requestConfirmation prompts the user to submit their proper confirmation 
+     * message to reset the game.
+     * @param {Event} _event
+     */
+    var requestConfirmation = (_event) => {
+      let confirmation = prompt("Please enter instructor password to inject the new point:");
+      inject(confirmation)
+    }
+
+    /**
+     * Wait for the user to tap/click one of the 'Inject!' buttons on the page.
+     */
+    document.querySelector("h2").addEventListener("click", requestConfirmation)
+  </script>
+</html>
+`;
+
 
 /**
  * splashPage returns a response body as a string. The response body contains
@@ -463,6 +522,7 @@ const splashPage = `
   <p>Select an option below:</p>
   <a href="/board">View Scoreboard</a>
   <a href="/reset">Reset Scoreboard</a>
+  <a href="/settings">Settings</a>
 </body>
 </html>
 `;
@@ -725,6 +785,16 @@ async function resetBoard(request, env) {
 async function confirmContract() {
   return Response.redirect("https://gtbranch-development.madduck.workers.dev/board", 303);
 }
+/**
+ * enableInject will provide a convenient way for instructors to 
+ * enable inject points as required. -GKT
+ */
+
+async function enableInject() {
+
+
+}
+
 
 /**
  * handleRequest consumes a request forwarded by the main event listener.
@@ -754,6 +824,8 @@ async function handleRequest(request, env, ctx) {
       return resetBoard(request, env);
     case "/confirm":
       return confirmContract();
+    case "/inject":
+      return enableInject();
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
