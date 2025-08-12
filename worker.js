@@ -88,6 +88,7 @@ th, td {
 </style>
 `;
 
+
 /**
  * flagPage consumes a flag object and returns a response body as a string.
  * The response body represents a flag waypoint - the content shown to a
@@ -314,7 +315,11 @@ const boardPage = (flags) => `
        * Keep both team and index for color-coded contract submissions. -GKT
        */
 
-      name.textContent = flag.name;
+      name.textContent = flag.name || "";
+      if (flag.enabled === false) {
+        name.textContent += " (disabled)";
+        name.style.opacity = "0.6";
+      };
 
       // Determine winner
       var winningTeam = null;
@@ -355,9 +360,6 @@ const boardPage = (flags) => `
           contracts.innerHTML += '<em>' + line + '</em><br>';
         }
       }
-
-
-
 
       /**
        * Append the newly loaded data into the table row
@@ -440,6 +442,11 @@ const resetPage = `
 </html>
 `;
 
+/**
+ * injectPage returns a response body as a string. The response body contains
+ * buttons which will enable new points to be captured and populate them on
+ * the score board. A board reset will revert these points to a deactivated state. -GKT
+ */
 const injectPage = `
 <!DOCTYPE html>
 <html lang="en">
@@ -452,48 +459,35 @@ const injectPage = `
   <body>
     <div class="container">
       <div class="subcontainer">
-        <h2>Enable Chargers Inject!</h2>
-        <h2>Enable Ravens Inject!</h2>
+        <h2 data-type="chargers">Enable Chargers Inject!</h2>
+        <h2 data-type="ravens">Enable Ravens Inject!</h2>
       </div>
      </div>
   </body>
   <script>
-    /**
-     * inject consumes a confirmation in the form of a String and enables a new
-     * flag capture point. If the server accepts the confirmation, the user will
-     * be redirected to the score board. If the server encounters an error, 
-     * then the user will be prompted to reattempt the inject.
-     * @param {String} confirmation
-     */
-    var inject = (confirmation) => {
-      if (confirmation === 'INJECTMADDUCK') {
-        fetch("/inject", { method: "POST", body: confirmation })
-        .then((response) => {
-          if (!response.ok) {
-            alert("HTTP Error " + response.status + ". Please try again.");
-          } else {
-            window.location.href = "/board";
-          }
-        })
-      } else {
-        alert("Please enter instructor password.")
-      }
+    function callInject(qs, confirmation) {
+      return fetch("/inject" + qs, { method: "POST", body: confirmation });
     }
 
-    /**
-     * requestConfirmation prompts the user to submit their proper confirmation 
-     * message to reset the game.
-     * @param {Event} _event
-     */
-    var requestConfirmation = (_event) => {
-      let confirmation = prompt("Please enter instructor password to inject the new point:");
-      inject(confirmation)
+    function requestConfirmation(ev) {
+      var el = ev.currentTarget;
+      var type = el.getAttribute("data-type");
+      var confirmation = prompt("Please enter instructor password to inject the new point:");
+      if (!confirmation) return;
+
+      var qs = "?type=" + encodeURIComponent(type);
+      callInject(qs, confirmation).then(function(res) {
+        if (!res.ok) alert("HTTP Error " + res.status);
+        else window.location.href = "/board";
+      }).catch(function(err) {
+        alert("Unexpected error: " + err.message);
+      });
     }
 
-    /**
-     * Wait for the user to tap/click one of the 'Inject!' buttons on the page.
-     */
-    document.querySelector("h2").addEventListener("click", requestConfirmation)
+    var buttons = document.querySelectorAll("h2[data-type]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", requestConfirmation);
+    }
   </script>
 </html>
 `;
@@ -522,11 +516,10 @@ const splashPage = `
   <p>Select an option below:</p>
   <a href="/board">View Scoreboard</a>
   <a href="/reset">Reset Scoreboard</a>
-  <a href="/settings">Settings</a>
+  <a href="/inject">Enable Injects</a>
 </body>
 </html>
 `;
-
 
 
 /**
@@ -589,7 +582,12 @@ async function getFlag(request, env) {
   if (!id) return new Response("Missing id", { status: 400 });
 
   const flag = await env.FLAGS.get(id.toString(), { type: "json" });
+
+  // Determine if flag exists
   if (!flag) return new Response("The requested resource could not be found 🦆", { status: 404 });
+
+  // Determine if flag is enabled (for inject flags)
+  if (!flag.enabled) return new Response("This flag isn't active yet.", { status: 403 });
 
   const body = flagPage(flag);
   return new Response(body, {
@@ -638,9 +636,10 @@ async function captureFlag(request, env) {
 
     // Load flag data from KV
     const flag = await env.FLAGS.get(id, { type: "json" });
-    if (!flag) {
-      return new Response("Flag not found in KV store.", { status: 404 });
-    }
+    if (!flag) return new Response("Flag not found in KV store.", { status: 404 });
+
+    // Determine if flag is enabled (for inject flags)
+    if (!flag.enabled) return new Response("This flag has not been activated yet.", {status: 403});
 
     // Determine winner if not already set
     let winner = flag.winner ? flag.winner : await check(contract, id, env);
@@ -746,24 +745,24 @@ async function resetBoard(request, env) {
   }
 
   const data = {
-    "1":  { name:"Broncos",    times:[], contracts:[], red:800,  blue:800,  winner:null },
-    "2":  { name:"Buccaneers", times:[], contracts:[], red:0,    blue:1200, winner:null },
-    "3":  { name:"Chargers",   times:[], contracts:[], red:400,  blue:400,  winner:null },
-    "4":  { name:"Chiefs",     times:[], contracts:[], red:800,  blue:200,  winner:null },
-    "5":  { name:"Commanders", times:[], contracts:[], red:400,  blue:400,  winner:null },
-    "6":  { name:"Cowboys",    times:[], contracts:[], red:600,  blue:400,  winner:null },
-    "7":  { name:"Dolphins",   times:[], contracts:[], red:600,  blue:600,  winner:null },
-    "8":  { name:"Eagles",     times:[], contracts:[], red:400,  blue:400,  winner:null },
-    "9":  { name:"Giants",     times:[], contracts:[], red:200,  blue:600,  winner:null },
-    "10": { name:"Jaguars",    times:[], contracts:[], red:800,  blue:200,  winner:null },
-    "11": { name:"Jets",       times:[], contracts:[], red:200,  blue:200,  winner:null },
-    "12": { name:"Patriots",   times:[], contracts:[], red:800,  blue:200,  winner:null },
-    "13": { name:"Ravens",     times:[], contracts:[], red:200,  blue:200,  winner:null },
-    "14": { name:"Saints",     times:[], contracts:[], red:200,  blue:600,  winner:null },
-    "15": { name:"Seahawks",   times:[], contracts:[], red:800,  blue:200,  winner:null },
-    "16": { name:"Texans",     times:[], contracts:[], red:200,  blue:800,  winner:null },
-    "17": { name:"Titans",     times:[], contracts:[], red:1200, blue:600,  winner:null },
-    "18": { name:"Vikings",    times:[], contracts:[], red:200,  blue:800,  winner:null }
+    "1":  { name:"Broncos",    times:[], contracts:[], red:800,  blue:800,  winner:null, enabled:true },
+    "2":  { name:"Buccaneers", times:[], contracts:[], red:0,    blue:1200, winner:null, enabled:true },
+    "3":  { name:"Chargers",   times:[], contracts:[], red:400,  blue:400,  winner:null, enabled:false }, // inject point
+    "4":  { name:"Chiefs",     times:[], contracts:[], red:800,  blue:200,  winner:null, enabled:true },
+    "5":  { name:"Commanders", times:[], contracts:[], red:400,  blue:400,  winner:null, enabled:true },
+    "6":  { name:"Cowboys",    times:[], contracts:[], red:600,  blue:400,  winner:null, enabled:true },
+    "7":  { name:"Dolphins",   times:[], contracts:[], red:600,  blue:600,  winner:null, enabled:true },
+    "8":  { name:"Eagles",     times:[], contracts:[], red:400,  blue:400,  winner:null, enabled:true },
+    "9":  { name:"Giants",     times:[], contracts:[], red:200,  blue:600,  winner:null, enabled:true },
+    "10": { name:"Jaguars",    times:[], contracts:[], red:800,  blue:200,  winner:null, enabled:true },
+    "11": { name:"Jets",       times:[], contracts:[], red:200,  blue:200,  winner:null, enabled:true },
+    "12": { name:"Patriots",   times:[], contracts:[], red:800,  blue:200,  winner:null, enabled:true },
+    "13": { name:"Ravens",     times:[], contracts:[], red:200,  blue:200,  winner:null, enabled:false }, //inject point
+    "14": { name:"Saints",     times:[], contracts:[], red:200,  blue:600,  winner:null, enabled:true },
+    "15": { name:"Seahawks",   times:[], contracts:[], red:800,  blue:200,  winner:null, enabled:true },
+    "16": { name:"Texans",     times:[], contracts:[], red:200,  blue:800,  winner:null, enabled:true },
+    "17": { name:"Titans",     times:[], contracts:[], red:1200, blue:600,  winner:null, enabled:true },
+    "18": { name:"Vikings",    times:[], contracts:[], red:200,  blue:800,  winner:null, enabled:true }
   };
 
   await Promise.all(Object.entries(data).map(([k, v]) =>
@@ -785,14 +784,51 @@ async function resetBoard(request, env) {
 async function confirmContract() {
   return Response.redirect("https://gtbranch-development.madduck.workers.dev/board", 303);
 }
+
+// Define which flags will be disabled by default and enabled at instructor discretion. -GKT
+var INJECT_TARGETS = { chargers: "3", ravens: "13" };
+
 /**
  * enableInject will provide a convenient way for instructors to 
  * enable inject points as required. -GKT
  */
+async function enableInject(request, env) {
+  if (request.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
+  }
 
-async function enableInject() {
+  var confirmation = await request.text();
+  if (confirmation !== "INJECTMADDUCK") {
+    return new Response("Forbidden", { status: 403 });
+  }
 
+  var url = new URL(request.url);
+  var type = url.searchParams.get("type");
+  var id = INJECT_TARGETS[type];
+  if (!id) {
+    return new Response("Unknown inject type", { status: 400 });
+  }
 
+  var flag = await env.FLAGS.get(id, { type: "json" });
+  if (!flag) {
+    return new Response("Flag not found", { status: 404 });
+  }
+
+  // Flip enabled to true; leave points and everything else untouched
+  var updated = {
+    name: flag.name,
+    times: Array.isArray(flag.times) ? flag.times : [],
+    contracts: Array.isArray(flag.contracts) ? flag.contracts : [],
+    red: flag.red,
+    blue: flag.blue,
+    winner: flag.winner || null,
+    enabled: true
+  };
+
+  await env.FLAGS.put(id, JSON.stringify(updated));
+  await env.FLAGS.put("__last_inject", JSON.stringify({ type: type, id: id, when: Date.now() }));
+
+  return new Response(null, { status: 200 });
 }
 
 
@@ -825,7 +861,7 @@ async function handleRequest(request, env, ctx) {
     case "/confirm":
       return confirmContract();
     case "/inject":
-      return enableInject();
+      return enableInject(request, env);
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
