@@ -12,12 +12,12 @@
  * [+] Added buttons to enable inject points, which are now disabled by default
  * [+] Added persistent navigation toolbar
  * [+] Added settings page (scaffold)
+ * [+] Only show Chargers and Ravens on scoreboard after inject has been released
  *
  * [ ] To Do:
  * [ ] Find a way to push injects via scoreboard alerts?
  * [ ] Breadcrumb tracking?
  * [ ] Penalties based on inverse geofencing? Could have a /penalty page that users get redirected to if they enter fenced-off area that displays penalty timer and prevents contract submission via session cookie?
- * [ ] Only show Chargers and Ravens on scoreboard after inject has been released
  */
 
 /**
