@@ -24,7 +24,7 @@ npm run-script run
 to stage a local copy of the project. Changes made locally will **not** affect the production instance.
 
 ### Recommendations
-The `dev` branch is an in-progress migration toward an [ACID](https://en.wikipedia.org/wiki/ACID)-compliant data model. This will address the issue where logged contracts could overwrite each other by:
+The `deprecated/acid` branch represents an ongoing migration toward an [ACID](https://en.wikipedia.org/wiki/ACID)-compliant data model, abandoned for the time being by the original developer. This will address the issue where logged contracts could overwrite each other by:
 - Storing contracts atomically with:  
   - the contract statement  
   - the team designation  
