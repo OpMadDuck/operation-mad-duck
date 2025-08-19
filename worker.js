@@ -69,6 +69,20 @@ th, td {
 </style>
 `;
 
+
+/**
+ * The toolbar is persistent across the scoreboard, reset, and settings pages,
+ * allowing for easier navigation.
+ */
+const toolbar = `
+<div id="toolbar" style="background-color: #333; color: white; padding: 10px;">
+    <a href="/../board" style="color: white; margin-right: 15px;">Scoreboard</a>
+    <a href="/../reset" style="color: white; margin-right: 15px;">Reset</a>
+    <a href="https://github.com/OpMadDuck/operation-mad-duck" target="_blank" style="color: white; margin-right: 15px;">GitHub</a>
+    <a href="/../settings" style="color: white; margin-right: 15px;">Settings</a>
+</div>
+`;
+
 /**
  * flagPage consumes a flag object and returns a response body as a string.
  * The response body represents a flag waypoint - the content shown to a
@@ -158,10 +172,11 @@ const boardPage = (flags) => `
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | Score Board</title>
+    <title>Operation Mad Duck | Scoreboard</title>
     ${style}
   </head>
   <body>
+    ${toolbar}
     <div class="container">
       <div class="subcontainer">
         <table>
@@ -287,6 +302,7 @@ const resetPage = `
     ${style}
   </head>
   <body>
+    ${toolbar}
     <div class="container">
       <div class="subcontainer">
         <h2>Reset!</h2>
@@ -331,6 +347,47 @@ const resetPage = `
      */
     document.querySelector("h2").addEventListener("click", requestConfirmation)
   </script>
+</html>
+`;
+
+/**
+ * settingsPage (WIP) should return response bodies as strings, which can modify
+ * various attributes of the simulation.
+ */
+const settingsPage = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Operation Mad Duck | Settings</title>
+    ${style}
+  </head>
+  <body>
+    ${toolbar}
+    <div class="container">
+      <div class="subcontainer">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:15%">Setting</th>
+              <th style="width:65%">Description</th>
+              <th style="width:10%">On</th>
+              <th style="width:10%">Off</th>
+            </tr>
+          </thead>
+          <tbody id='settings'>
+          </tbody>
+          <tr>
+            <th></th>
+            <th></th>
+            <th id='on'></th>
+            <th id='off'></th>
+          </tr>
+        </table>
+      </div>
+     </div>
+  </body>
 </html>
 `;
 
@@ -438,6 +495,17 @@ async function getBoard() {
     headers: { "Content-Type": "text/html" },
   });
 }
+
+
+async function getSettings() {
+  return new Response(settingsPage, {
+    headers: { "Content-Type": "text/html" },
+  });
+}
+
+
+
+
 
 /**
  * resetBoard consumes a request forwarded by the handleRequest() function
@@ -562,6 +630,8 @@ async function handleRequest(request) {
       return captureFlag(request);
     case "/board":
       return getBoard();
+    case "/settings":
+      return getSettings();
     case "/reset":
       return resetBoard(request);
     case "/confirm":

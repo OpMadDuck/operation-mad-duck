@@ -4,7 +4,7 @@
   "description": "a Cloudflare Workers program for OMD",
   "main": "worker.js",
   "devDependencies": {
-    "miniflare": "^2.14.4"
+    "miniflare": "^4.20250816.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/willswire/operation-mad-duck#readme",
   "dependencies": {
-    "wrangler": "^4.28.0"
-  }
+    "wrangler": "^4.31.0"
+  },
+  "keywords": [],
+  "type": "commonjs"
 }
