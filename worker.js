@@ -6,11 +6,13 @@
  * [++] Recommend requiring users to test a QR code together in class prior to ROC drill
  * [+] Added functionality to append user's current location data and distance from flag to scoreboard upon successful submission
  * [+] Added redirect to send user directly to scoreboard upon succesful contract submission for positive verification
- * [+] Remove password text from reset dialog box to ensure only the instructor can reset the scoreboard
+ * [+] Removed password text from reset dialog box to ensure only the instructor can reset the scoreboard
  * [+] Added color-coding for successful flag captures to make appearance more appealing
  * [+] Added splashPage html variable and case for visiting / (instead of just a 404 like before)
  * [+] Added buttons to enable inject points, which are now disabled by default
- * 
+ * [+] Added persistent navigation toolbar
+ * [+] Added settings page (scaffold)
+ *
  * [ ] To Do:
  * [ ] Find a way to push injects via scoreboard alerts?
  * [ ] Breadcrumb tracking?
@@ -89,6 +91,18 @@ th, td {
 </style>
 `;
 
+/**
+ * The toolbar is persistent across the scoreboard, reset, and settings pages,
+ * allowing for easier navigation. -RC
+ */
+const toolbar = `
+<div id="toolbar" style="background-color: #333; color: white; padding: 10px;">
+    <a href="/../board" style="color: white; margin-right: 15px;">Scoreboard</a>
+    <a href="/../reset" style="color: white; margin-right: 15px;">Reset</a>
+    <a href="https://github.com/OpMadDuck/operation-mad-duck" target="_blank" style="color: white; margin-right: 15px;">GitHub</a>
+    <a href="/../settings" style="color: white; margin-right: 15px;">Settings</a>
+</div>
+`;
 
 /**
  * flagPage consumes a flag object and returns a response body as a string.
@@ -230,10 +244,11 @@ const boardPage = (flags) => `
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | Score Board</title>
+    <title>Operation Mad Duck | Scoreboard</title>
     ${style}
   </head>
   <body>
+    ${toolbar}
     <div class="container">
       <div class="subcontainer">
         <table>
@@ -396,6 +411,7 @@ const resetPage = `
     ${style}
   </head>
   <body>
+    ${toolbar}
     <div class="container">
       <div class="subcontainer">
         <h2>Reset!</h2>
@@ -570,6 +586,42 @@ function isWithinRadius(loc1, loc2, radiusMeters = 50) {
   return calculateDistance(loc1, loc2) <= radiusMeters; // Return result of calculateDistance instead. -GKT
 }
 
+/*
+ * settingsPage (WIP) should return response bodies as strings, which can modify
+ * various attributes of the simulation.
+ */
+const settingsPage = `
+    <title>Operation Mad Duck | Settings</title>
+    ${style}
+  </head>
+  <body>
+    ${toolbar}
+    <div class="container">
+      <div class="subcontainer">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:15%">Setting</th>
+              <th style="width:65%">Description</th>
+              <th style="width:10%">On</th>
+              <th style="width:10%">Off</th>
+            </tr>
+          </thead>
+          <tbody id='settings'>
+          </tbody>
+          <tr>
+            <th></th>
+            <th></th>
+            <th id='on'></th>
+            <th id='off'></th>
+          </tr>
+        </table>
+      </div>
+     </div>
+  </body>
+</html>
+`;
+
 /**
  * getFlag consumes a request forwarded by the handleRequest() function
  * and supplies a dynamic Response containing a flagPage.
@@ -717,6 +769,17 @@ async function getBoard(env) {
   });
 }
 
+
+async function getSettings() {
+  return new Response(settingsPage, {
+    headers: { "Content-Type": "text/html" },
+  });
+}
+
+
+
+
+
 /**
  * resetBoard consumes a request forwarded by the handleRequest() function
  * and runs a check on the submitted confirmation message prior to resetting
@@ -857,6 +920,8 @@ async function handleRequest(request, env, ctx) {
       return captureFlag(request, env);
     case "/board":
       return getBoard(env);
+    case "/settings":
+      return getSettings();
     case "/reset":
       return resetBoard(request, env);
     case "/confirm":
