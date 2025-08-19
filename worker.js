@@ -579,10 +579,10 @@ function calculateDistance(loc1, loc2) {
 }
 
 /** isWithinRadius compares user's current location to predefined flag coordinates.
- * Flags can only be captured if user is within 50m of flag. 
+ * Flags can only be captured if user is within 15m of flag.
  * Update radiusMeters below to increase/decrease the geofence radius size. -GKT 
  */
-function isWithinRadius(loc1, loc2, radiusMeters = 50) {
+function isWithinRadius(loc1, loc2, radiusMeters = 15) {
   return calculateDistance(loc1, loc2) <= radiusMeters; // Return result of calculateDistance instead. -GKT
 }
 
