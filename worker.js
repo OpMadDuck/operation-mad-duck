@@ -97,10 +97,12 @@ th, td {
  */
 const toolbar = `
 <div id="toolbar" style="background-color: #333; color: white; padding: 10px;">
-    <a href="/../board" style="color: white; margin-right: 15px;">Scoreboard</a>
-    <a href="/../reset" style="color: white; margin-right: 15px;">Reset</a>
+    <a href="/" style="color: white; margin-right: 15px;">Home</a>
+    <a href="/board" style="color: white; margin-right: 15px;">Scoreboard</a>
+    <a href="/reset" style="color: white; margin-right: 15px;">Reset</a>
+    <a href="/inject" style="color: white; margin-right: 15px;">Injects</a>
+    <a href="/settings" style="color: white; margin-right: 15px;">Settings</a>
     <a href="https://github.com/OpMadDuck/operation-mad-duck" target="_blank" style="color: white; margin-right: 15px;">GitHub</a>
-    <a href="/../settings" style="color: white; margin-right: 15px;">Settings</a>
 </div>
 `;
 
@@ -474,6 +476,7 @@ const injectPage = `
     ${style}
   </head>
   <body>
+    ${toolbar}
     <div class="container">
       <div class="subcontainer">
         <h2 data-type="chargers">Enable Chargers Inject!</h2>
@@ -534,24 +537,26 @@ const splashPage = `
   <a href="/board">View Scoreboard</a><br>
   <a href="/reset">Reset Scoreboard</a><br>
   <a href="/inject">Enable Injects</a><br>
+  <a href="/settings">Settings Menu</a><br>
+  <a href="https://github.com/OpMadDuck/operation-mad-duck" target="_blank" style="color: black">GitHub Repository</a><br>
 </body>
 </html>
 `;
 
 
 /**
- * FLAG_COORDS contains (updated*) coordinates of each flag for geofencing. Adjust as needed. -GKT
+ * FLAG_COORDS contains coordinates of each flag for geofencing. Adjust as needed. -GKT
  */
 const FLAG_COORDS = {
-  "1": { lat: 30.4200, lon: -88.7736 }, // Broncos lat: 30.4062, lon: -88.9197
-  "2": { lat: 30.4163, lon: -88.9237 }, // Buccaneers
-  "3": { lat: 30.4148, lon: -88.9170 }, // Chargers 
-  "4": { lat: 30.4126, lon: -88.9131 }, // Chiefs 
-  "5": { lat: 30.4049, lon: -88.9123 }, // Commanders 
-  "6": { lat: 30.4006, lon: -88.9139 }, // Cowboys 
-  "7": { lat: 30.4100, lon: -88.9132 }, // Dolphins 
-  "8": { lat: 30.4081, lon: -88.9191 }, // Eagles 
-  "9": { lat: 30.4010, lon: -88.9284 }, // Giants 
+  "1": { lat: 30.4062, lon: -88.9197 },  // Broncos
+  "2": { lat: 30.4163, lon: -88.9237 },  // Buccaneers
+  "3": { lat: 30.4148, lon: -88.9170 },  // Chargers
+  "4": { lat: 30.4126, lon: -88.9131 },  // Chiefs
+  "5": { lat: 30.4049, lon: -88.9123 },  // Commanders
+  "6": { lat: 30.4006, lon: -88.9139 },  // Cowboys
+  "7": { lat: 30.4100, lon: -88.9132 },  // Dolphins
+  "8": { lat: 30.4081, lon: -88.9191 },  // Eagles
+  "9": { lat: 30.4010, lon: -88.9284 },  // Giants
   "10": { lat: 30.4112, lon: -88.9127 }, // Jaguars 
   "11": { lat: 30.4089, lon: -88.9063 }, // Jets 
   "12": { lat: 30.4137, lon: -88.9094 }, // Patriots 
@@ -559,7 +564,7 @@ const FLAG_COORDS = {
   "14": { lat: 30.3987, lon: -88.9293 }, // Saints 
   "15": { lat: 30.4051, lon: -88.9098 }, // Seahawks 
   "16": { lat: 30.4105, lon: -88.9107 }, // Texans 
-  "17": { lat: 30.4003, lon: -88.9282 }, // Titanss
+  "17": { lat: 30.4003, lon: -88.9282 }, // Titans
   "18": { lat: 30.3995, lon: -88.9109 }  // Vikings
 };
 
@@ -679,10 +684,10 @@ async function captureFlag(request, env) {
     // Calculate distance from user to flag
     const distance = calculateDistance(location, target);
 
-    // Check geofence radius (50 meters)
+    // Check geofence radius
     if (!isWithinRadius(location, target)) {
       return new Response(
-        `You are outside the allowed location to capture this flag.\nDistance: ${Math.round(distance)} meters.`,
+        `You are outside the allowed radius to capture this flag.\nDistance: ${Math.round(distance)} meters.`,
         { status: 403 }
       );
     }
