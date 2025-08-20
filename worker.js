@@ -864,11 +864,15 @@ async function resetBoard(request, env) {
  * contract has been logged successfully by the Worker.
  * @returns {Response}
  * 
- * Added a redirect to the scoreboard upon successful
- * contract submission. -GKT
+ * Reverted confirmContract back to original to disable redirect
+ * upon successful contract submission, forcing communication 
+ * with C2 element. -GKT
  */
 async function confirmContract() {
-  return Response.redirect("https://gtbranch-development.madduck.workers.dev/board", 303);
+  return new Response("Contract received 💬", {
+    status: 200,
+    headers: { "Clear-Site-Data": "*" },
+  });
 }
 
 // Define which flags will be disabled by default and enabled at instructor discretion. -GKT
