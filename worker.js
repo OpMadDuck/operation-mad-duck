@@ -647,7 +647,7 @@ async function getFlag(request, env) {
   if (!flag) return new Response("The requested resource could not be found 🦆", { status: 404 });
 
   // Determine if flag is enabled (for inject flags)
-  if (flag.enabled === false) return new Response("This flag isn't active yet.", { status: 403 });
+  if (flag.enabled === false && !flag.winner) return new Response("This flag isn't active yet.", { status: 403 });
 
   const body = flagPage(flag);
   return new Response(body, {
@@ -684,7 +684,10 @@ async function captureFlag(request, env) {
     // Load current flag
     const flag = await env.FLAGS.get(id, { type: "json" });
     if (!flag) return new Response("Flag not found in KV store.", { status: 404 });
-    if (!flag.enabled) return new Response("This flag has not been activated yet.", { status: 403 });
+    //if (!flag.enabled) return new Response("This flag has not been activated yet.", { status: 403 });
+    if (flag.enabled === false && !flag.winner) { 
+      return new Response("This flag has not been activated yet.", { status: 403 });
+    }
 
     // Distance + radius check
     const distance = calculateDistance(location, target);
