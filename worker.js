@@ -548,7 +548,8 @@ const splashPage = `
  * FLAG_COORDS contains coordinates of each flag for geofencing. Adjust as needed. -GKT
  */
 const FLAG_COORDS = {
-  "1": { lat: 30.4062, lon: -88.9197 },  // Broncos
+  "1": { lat: 30.4099, lon: -88.9172 }, // HQ, testing as Broncos
+  //"1": { lat: 30.4062, lon: -88.9197 },  // Broncos
   "2": { lat: 30.4163, lon: -88.9237 },  // Buccaneers
   "3": { lat: 30.4148, lon: -88.9170 },  // Chargers
   "4": { lat: 30.4126, lon: -88.9131 },  // Chiefs
