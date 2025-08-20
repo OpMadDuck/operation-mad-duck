@@ -549,7 +549,7 @@ const splashPage = `
  * FLAG_COORDS contains coordinates of each flag for geofencing. Adjust as needed. -GKT
  */
 const FLAG_COORDS = {
-  "1": { lat: 30.4099, lon: -88.9172 }, // HQ, testing as Broncos
+  "1": { lat: 30.419993, lon: -88.773617 }, // Testing as Broncos
   //"1": { lat: 30.4062, lon: -88.9197 },  // Broncos
   "2": { lat: 30.4163, lon: -88.9237 },  // Buccaneers
   "3": { lat: 30.4148, lon: -88.9170 },  // Chargers
@@ -664,6 +664,8 @@ async function getFlag(request, env) {
  * @param {Request} request
  * @returns {Response}
  * Updated scope for env. -GKT
+ * Updated captureFlag to ensure contract submissions are logged on scoreboard
+ * regardless of location. -GKT
  */
 async function captureFlag(request, env) {
   try {
@@ -675,50 +677,52 @@ async function captureFlag(request, env) {
     const location = json.location;
 
     const target = FLAG_COORDS[id];
-
-    // Check for missing location data
     if (!location || !target) {
-      return new Response("Missing geolocation data or invalid flag ID.", {
-        status: 400,
-      });
+      return new Response("Missing geolocation data or invalid flag ID.", { status: 400 });
     }
 
-    // Calculate distance from user to flag
-    const distance = calculateDistance(location, target);
-
-    // Check geofence radius
-    if (!isWithinRadius(location, target)) {
-      return new Response(
-        `You are outside the allowed radius to capture this flag.\nDistance: ${Math.round(distance)} meters.`,
-        { status: 403 }
-      );
-    }
-
-    // Load flag data from KV
+    // Load current flag
     const flag = await env.FLAGS.get(id, { type: "json" });
     if (!flag) return new Response("Flag not found in KV store.", { status: 404 });
+    if (!flag.enabled) return new Response("This flag has not been activated yet.", { status: 403 });
 
-    // Determine if flag is enabled (for inject flags)
-    if (flag.enabled === false) return new Response("This flag has not been activated yet.", {status: 403});
+    // Distance + radius check
+    const distance = calculateDistance(location, target);
+    const inRadius = isWithinRadius(location, target);
 
-    // Determine winner if not already set
-    let winner = flag.winner ? flag.winner : await check(contract, id, env);
+    // Decide winner: only if in radius AND not already set
+    let winner = flag.winner;
+    if (inRadius && !winner) {
+      winner = await check(contract, id, env);
+    }
 
-    // Update KV store with new contract
+    // Build the contract line to store (always store attempt)
+    const contractLine =
+      `${contract} (Location: ${location.lat.toFixed(5)}, ${location.lon.toFixed(5)} | ` +
+      `Distance: ${Math.round(distance)}m${inRadius ? "" : " | OOR"})`;
+
+    // Persist attempt regardless of radius
     await env.FLAGS.put(
       id,
       JSON.stringify({
         name: flag.name,
         times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
-        //contracts: flag.contracts.concat(contract), // Original scoreboard update code
-        contracts: flag.contracts.concat(`${contract} (Location: ${location.lat.toFixed(5)}, ${location.lon.toFixed(5)} | Distance from target: ${Math.round(distance)}m)`), // Replace this with the previous line to not display location data on scoreboard. -GKT
+        contracts: flag.contracts.concat(contractLine),
         red: flag.red,
         blue: flag.blue,
-        winner: winner,
-        enabled: (flag.enabled === false) ? false : true,
+        winner: winner, // unchanged if out-of-radius or regex didn't match
       })
     );
 
+    // If out of radius, alert the user (non-2xx) but we've already logged it
+    if (!inRadius) {
+      return new Response(
+        `You are outside the allowed radius. Attempt has been logged.\nDistance: ${Math.round(distance)} meters.`,
+        { status: 403 }
+      );
+    }
+
+    // In radius -> normal success
     return new Response(null, { status: 200 });
   } catch (err) {
     return new Response("Error: " + err.toString(), { status: 500 });
