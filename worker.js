@@ -646,8 +646,10 @@ async function getFlag(request, env) {
   // Determine if flag exists
   if (!flag) return new Response("The requested resource could not be found 🦆", { status: 404 });
 
-  // Determine if flag is enabled (for inject flags)
-  if (flag.enabled === false && !flag.winner) return new Response("This flag isn't active yet.", { status: 403 });
+  // Only block if explicitly disabled AND no winner yet
+  if (flag.enabled === false && !flag.winner) {
+    return new Response("This flag isn't active yet.", { status: 403 });
+  }
 
   const body = flagPage(flag);
   return new Response(body, {
@@ -685,9 +687,11 @@ async function captureFlag(request, env) {
     const flag = await env.FLAGS.get(id, { type: "json" });
     if (!flag) return new Response("Flag not found in KV store.", { status: 404 });
     //if (!flag.enabled) return new Response("This flag has not been activated yet.", { status: 403 });
-    if (flag.enabled === false && !flag.winner) { 
-      return new Response("This flag has not been activated yet.", { status: 403 });
+    // Only block if explicitly disabled AND no winner yet
+    if (flag.enabled === false && !flag.winner) {
+      return new Response("This flag isn't active yet.", { status: 403 });
     }
+
 
     // Distance + radius check
     const distance = calculateDistance(location, target);
@@ -710,10 +714,13 @@ async function captureFlag(request, env) {
       JSON.stringify({
         name: flag.name,
         times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
-        contracts: flag.contracts.concat(contractLine),
+        //contracts: flag.contracts.concat(contractLine),
+        contracts: flag.contracts.concat(
+        `${contract} (Location: ${location.lat.toFixed(5)}, ${location.lon.toFixed(5)} | Distance from target: ${Math.round(distance)}m)`),
         red: flag.red,
         blue: flag.blue,
         winner: winner, // unchanged if out-of-radius or regex didn't match
+        enabled: (flag.enabled ?? true)
       })
     );
 
