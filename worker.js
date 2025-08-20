@@ -18,6 +18,7 @@
  * [ ] Find a way to push injects via scoreboard alerts?
  * [ ] Breadcrumb tracking?
  * [ ] Penalties based on inverse geofencing? Could have a /penalty page that users get redirected to if they enter fenced-off area that displays penalty timer and prevents contract submission via session cookie?
+ * [ ] Add contributor contact information
  */
 
 /**
@@ -646,7 +647,7 @@ async function getFlag(request, env) {
   if (!flag) return new Response("The requested resource could not be found 🦆", { status: 404 });
 
   // Determine if flag is enabled (for inject flags)
-  if (!flag.enabled) return new Response("This flag isn't active yet.", { status: 403 });
+  if (flag.enabled === false) return new Response("This flag isn't active yet.", { status: 403 });
 
   const body = flagPage(flag);
   return new Response(body, {
@@ -698,7 +699,7 @@ async function captureFlag(request, env) {
     if (!flag) return new Response("Flag not found in KV store.", { status: 404 });
 
     // Determine if flag is enabled (for inject flags)
-    if (!flag.enabled) return new Response("This flag has not been activated yet.", {status: 403});
+    if (flag.enabled === false) return new Response("This flag has not been activated yet.", {status: 403});
 
     // Determine winner if not already set
     let winner = flag.winner ? flag.winner : await check(contract, id, env);
@@ -709,11 +710,12 @@ async function captureFlag(request, env) {
       JSON.stringify({
         name: flag.name,
         times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
-        //contracts: flag.contracts.concat(contract),
+        //contracts: flag.contracts.concat(contract), // Original scoreboard update code
         contracts: flag.contracts.concat(`${contract} (Location: ${location.lat.toFixed(5)}, ${location.lon.toFixed(5)} | Distance from target: ${Math.round(distance)}m)`), // Replace this with the previous line to not display location data on scoreboard. -GKT
         red: flag.red,
         blue: flag.blue,
         winner: winner,
+        enabled: (flag.enabled === false) ? false : true,
       })
     );
 
