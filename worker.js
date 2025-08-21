@@ -547,10 +547,11 @@ const splashPage = `
 
 /**
  * FLAG_COORDS contains coordinates of each flag for geofencing. Adjust as needed. -GKT
+ * TODO change back!
  */
 const FLAG_COORDS = {
-  "1": { lat: 30.419993, lon: -88.773617 }, // Testing as Broncos
-  //"1": { lat: 30.4062, lon: -88.9197 },  // Broncos
+  // "1": { lat: 30.392045, lon: -88.982127 }, // Testing as Broncos -RC
+  "1": { lat: 30.4062, lon: -88.9197 },  // Broncos
   "2": { lat: 30.4163, lon: -88.9237 },  // Buccaneers
   "3": { lat: 30.4148, lon: -88.9170 },  // Chargers
   "4": { lat: 30.4126, lon: -88.9131 },  // Chiefs
@@ -598,6 +599,11 @@ function isWithinRadius(loc1, loc2, radiusMeters = 50) {
  * various attributes of the simulation.
  */
 const settingsPage = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Operation Mad Duck | Settings</title>
     ${style}
   </head>
@@ -608,24 +614,129 @@ const settingsPage = `
         <table>
           <thead>
             <tr>
-              <th style="width:15%">Setting</th>
+              <th style="width:15%">Name</th>
               <th style="width:65%">Description</th>
-              <th style="width:10%">On</th>
-              <th style="width:10%">Off</th>
+              <th style="width:10%">Value</th>
+              <th style="width:10%">Modify</th>
             </tr>
           </thead>
-          <tbody id='settings'>
+          <tbody id='settingsTable'>
           </tbody>
           <tr>
-            <th></th>
-            <th></th>
-            <th id='on'></th>
-            <th id='off'></th>
+            <th id='name'></th>
+            <th id='description'></th>
+            <th id='value'></th>
+            <th id='modify'></th>
           </tr>
         </table>
       </div>
      </div>
   </body>
+  <script>
+    /**
+     * FROM HERE UNTIL toggleLocation IS FROM BOARDPAGE!
+     */
+
+    /**
+     * Instantiate the array of settings passed in from the worker.
+     */
+    const settings = ${settings}
+
+    /**
+     * escapeHtml sanitizes potentially dangerous javascript input.
+     * This helps prevent accidentally or intentionally unanticipated
+     * manipulation of the flag scoring and tracking mechanics.
+     */
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    /**
+     * Identify the score board table by its HTML ID
+     */
+    const settingsTable = document.querySelector("#settingsTable")
+
+    settings.forEach((setting) => {
+      /**
+       * Create the HTML elements for the row
+       * that will represent this flag, including:
+       * - The setting name
+       * - A description of the setting
+       * - The current value of the setting
+       * - A button to allow editing the setting
+       */
+      var row = document.createElement("tr")
+      var name = document.createElement("td")
+      var description = document.createElement("td")
+      var value = document.createElement("td")
+      var modify = document.createElement("td")
+
+      /**
+       * Populate the elements
+       */
+      name.innerHTML = setting.name
+      description.innerHTML = setting.description
+      value.innerHTML = setting.value
+      modify.innerHTML = "<button>modify</button>"
+
+      /**
+       * Append the newly loaded data into the table row
+       */
+      row.appendChild(name)
+      row.appendChild(description)
+      row.appendChild(value)
+      row.appendChild(modify)
+      settingsTable.appendChild(row)
+    })
+
+
+    /**
+     * HERE AND BELOW IS FROM RESETPAGE!
+     */
+
+    /**
+     * toggleLocation consumes a password in the form of a String and posts it
+     * back to the Worker to toggle whether location verification is active. If
+     * the server accepts the password, the settings menu will reload. If the
+     * server encounters an error, then the user will be prompted to reattempt.
+     * @param {String} confirmation
+     */
+
+    var toggleLocation = (confirmation) => {
+      if (confirmation === 'SETTINGSMADDUCK') {
+        fetch("/toggleLocation", { method: "POST", body: confirmation })
+        .then((response) => {
+          if (!response.ok) {
+            alert("HTTP Error " + response.status + ". Please try again.");
+          } else {
+            window.location.href = "/settings";
+          }
+        })
+      } else {
+        alert("Please enter instructor password.")
+      }
+    }
+
+    /**
+     * requestConfirmation prompts the user to submit their proper confirmation
+     * message to reset the game.
+     * @param {Event} _event
+     */
+    var requestConfirmation = (_event) => {
+      let confirmation = prompt("Please enter instructor password:");
+      toggleLocation(confirmation)
+    }
+
+    /**
+     * Wait for the user to tap/click the 'Toggle' button on the page.
+     */
+    document.querySelector("h2").addEventListener("click", requestConfirmation)
+  </script>
 </html>
 `;
 
@@ -858,6 +969,35 @@ async function resetBoard(request, env) {
   return new Response(null, { status: 200 });
 }
 
+/**
+ * toggleLocation consumes a request forwarded by the handleRequest() function
+ * and runs a check on the submitted confirmation message prior to toggling
+ * whether location verification is active. After passing all required checks,
+ * the setting is toggled in the KV store.
+ * @param {Request} request
+ * @returns {Response}
+ */
+async function toggleLocation(request, env) {
+  if (request.method !== "POST") {
+    return new Response(resetPage, { headers: { "Content-Type": "text/html" } });
+  }
+
+  const confirmation = await request.text();
+  if (confirmation !== "SETTINGSMADDUCK") {
+    return new Response("Incorrect password.", { status: 400 });
+  }
+
+  var data = {
+    "LocationVerification":  { name: "Location Verification", description: "Query the user's location on contract submission?", value: "enabled" }
+  };
+
+  await Promise.all(Object.entries(data).map(([k, v]) =>
+    env.SETTINGS.put(k, JSON.stringify(v))
+  ));
+
+  return new Response(null, { status: 200 });
+}
+
 
 /**
  * confirmContract will notify the user that their submitted
@@ -947,13 +1087,15 @@ async function handleRequest(request, env, ctx) {
     case "/board":
       return getBoard(env);
     case "/settings":
-      return getSettings();
+      return getSettings(env);
+    case "/toggleLocation":
+      return toggleLocation(request, env);
     case "/reset":
       return resetBoard(request, env);
     case "/confirm":
       return confirmContract();
     /** 
-     * The inject case is a little more complicated because enableInject() 
+     * The following is a little more complicated because enableInject()
      * modifies data on the server, whereas the other pages/functions are
      * read-only. Therefore, /inject must use the POST method, whereas the
      * other cases can use the GET method. -GKT
