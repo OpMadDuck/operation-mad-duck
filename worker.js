@@ -598,7 +598,7 @@ function isWithinRadius(loc1, loc2, radiusMeters = 50) {
  * settingsPage (WIP) should return response bodies as strings, which can modify
  * various attributes of the simulation.
  */
-const settingsPage = `
+const settingsPage = (settings) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -660,6 +660,7 @@ const settingsPage = `
      * Identify the score board table by its HTML ID
      */
     const settingsTable = document.querySelector("#settingsTable")
+
 
     settings.forEach((setting) => {
       /**
@@ -735,7 +736,15 @@ const settingsPage = `
     /**
      * Wait for the user to tap/click the 'Toggle' button on the page.
      */
-    document.querySelector("h2").addEventListener("click", requestConfirmation)
+    document.querySelectorAll("#settingsTable button").forEach((btn, idx) => {
+    btn.addEventListener("click", () => {
+      const key = settings[idx].key || settings[idx].name; // depends on how you structure settings
+      const newVal = prompt("Enter new value for " + settings[idx].name, settings[idx].value);
+      if (newVal === null) return;
+      fetch("/toggleLocation", { method: "POST", body: newVal }) // or a dedicated endpoint
+        .then(res => { if (!res.ok) alert("Error"); else window.location.reload(); });
+    });
+  });
   </script>
 </html>
 `;
@@ -903,11 +912,14 @@ async function getBoard(env) {
 }
 
 
-async function getSettings() {
-  return new Response(settingsPage, {
-    headers: { "Content-Type": "text/html" },
-  });
-}
+async function getSettings(request, env) {
+    // load settings from KV and pass JSON string into template
+    const keys = ["LocationVerification"]; // adjust as needed
+    const promises = keys.map(k => env.SETTINGS.get(k, { type: "json" }));
+    const data = await Promise.all(promises);
+    const body = settingsPage(JSON.stringify(data));
+    return new Response(body, { headers: { "Content-Type": "text/html" } });
+  }
 
 
 
@@ -978,25 +990,16 @@ async function resetBoard(request, env) {
  * @returns {Response}
  */
 async function toggleLocation(request, env) {
-  if (request.method !== "POST") {
-    return new Response(resetPage, { headers: { "Content-Type": "text/html" } });
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status:405 });
+    const confirmation = await request.text();
+    if (confirmation !== "SETTINGSMADDUCK") return new Response("Incorrect password.", { status:400 });
+
+    const cur = await env.SETTINGS.get("LocationVerification", { type: "json" });
+    const enabled = !(cur && cur.value === "enabled");
+    const newObj = { name: "Location Verification", description: "Query the user's location on contract submission?", value: enabled ? "enabled" : "disabled" };
+    await env.SETTINGS.put("LocationVerification", JSON.stringify(newObj));
+    return new Response(null, { status: 200 });
   }
-
-  const confirmation = await request.text();
-  if (confirmation !== "SETTINGSMADDUCK") {
-    return new Response("Incorrect password.", { status: 400 });
-  }
-
-  var data = {
-    "LocationVerification":  { name: "Location Verification", description: "Query the user's location on contract submission?", value: "enabled" }
-  };
-
-  await Promise.all(Object.entries(data).map(([k, v]) =>
-    env.SETTINGS.put(k, JSON.stringify(v))
-  ));
-
-  return new Response(null, { status: 200 });
-}
 
 
 /**
