@@ -948,10 +948,10 @@ async function ensureDefaultSettings(env) {
       description: "Allowed capture radius in meters",
       value: "15"
     },
-    "InstructorPassword": {
+    "RequirePassword": {
       name: "Require Instructor Password",
-      description: "Change current instructor password",
-      value: "RESETMADDUCK"
+      description: "Require instructor password? [KEEP ENABLED]",
+      value: "enabled"
     }
   };
   await Promise.all(Object.entries(defaults).map(([k, v]) =>
@@ -973,7 +973,7 @@ async function getSettings(request, env) {
   // create defaults if missing
   await ensureDefaultSettings(env);
 
-  const keys = ["LocationVerification", "GeofenceRadius", "InstructorPassword"];
+  const keys = ["LocationVerification", "GeofenceRadius", "RequirePassword"];
   const promises = keys.map(k => env.SETTINGS.get(k, { type: "json" }));
   const data = await Promise.all(promises);
   const items = data.map((obj, i) => ({ key: keys[i], ...obj }));
