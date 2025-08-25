@@ -554,8 +554,7 @@ const splashPage = `
  * TODO change back!
  */
 const FLAG_COORDS = {
-  "1": { lat: 30.392045, lon: -88.982127 }, // Testing as Broncos -RC
-  //"1": { lat: 30.4062, lon: -88.9197 },  // Broncos
+  "1": { lat: 30.4062, lon: -88.9197 },  // Broncos
   "2": { lat: 30.4163, lon: -88.9237 },  // Buccaneers
   "3": { lat: 30.4148, lon: -88.9170 },  // Chargers
   "4": { lat: 30.4126, lon: -88.9131 },  // Chiefs
