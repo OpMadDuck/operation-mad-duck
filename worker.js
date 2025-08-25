@@ -92,39 +92,6 @@ th, td {
 </style>
 `;
 
-// Cryptographic helper functions for password hashing:
-
-async function sha256Hex(msg) {
-  const enc = new TextEncoder();
-  const data = enc.encode(msg);
-  const hashBuf = await crypto.subtle.digest("SHA-256", data);
-  const hashArr = Array.from(new Uint8Array(hashBuf));
-  return hashArr.map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-function randomHex(bytes = 16) {
-const arr = crypto.getRandomValues(new Uint8Array(bytes));
-return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-/** createPasswordHash returns string "<sha256Hex(salt + password)>" */
-async function createPasswordHash(password) {
-  const salt = randomHex(16);
-  const hash = await sha256Hex(salt + password);
-  return `{salt}${hash}`;
-}
-
-/* verifyPassword accepts a candidate password and stored "<hex>" and returns boolean.
-*/
-async function verifyPassword(candidate, stored) {
-  if (!stored || typeof stored !== "string") return false;
-  const parts = stored.split("");
-  if (parts.length !== 2) return false;
-  const [salt, hex] = parts;
-  const candidateHash = await sha256Hex(salt + candidate);
-  return candidateHash === hex;
-}
-
 /**
  * The toolbar is persistent across the scoreboard, reset, and settings pages,
  * allowing for easier navigation. -RC
@@ -467,7 +434,7 @@ const resetPage = `
      * @param {String} confirmation
      */
     var reset = (confirmation) => {
-      if (confirmation === "RESETMADDUCK") {
+      if (confirmation === 'RESETMADDUCK') {
         fetch("/reset", { method: "POST", body: confirmation })
         .then((response) => {
           if (!response.ok) {
@@ -719,13 +686,8 @@ const settingsPage = (settings) => `
        */
       name.innerHTML = setting.name
       description.innerHTML = setting.description
-      if (setting.key === "InstructorPassword") {
-        value.innerHTML = "[password hidden]";
-        modify.innerHTML = "<button>change password</button>";
-      } else {
-        value.innerHTML = setting.value
-        modify.innerHTML = "<button>Modify</button>";
-      }
+      value.innerHTML = setting.value
+      modify.innerHTML = "<button>modify</button>"
 
       /**
        * Append the newly loaded data into the table row
@@ -775,28 +737,10 @@ const settingsPage = (settings) => `
      */
     document.querySelectorAll("#settingsTable button").forEach((btn, idx) => {
       btn.addEventListener("click", () => {
-        const key = btn.getAttribute("data-key");
-        if (key === "InstructorPassword") {
-          const current = prompt("Enter current instructor password:");
-          if (current === null) return;
-          const neu = prompt("Enter new instructor password:");
-          if (neu === null) return;
-          const payload = { key: "InstructorPassword", value: neu, password: current };
-          fetch("/toggleLocation", {
-            method: "POST",
-            body: JSON.stringify(payload),
-            headers: { "Content-Type": "application/json" }
-          }).then((res) => {
-            if (!res.ok) res.text().then(t => alert("Error: " + t));
-            else window.location.reload();
-          }).catch((err) => alert("Request failed: " + err.message));
-          return;
-        }
-
-        // regular setting flow
         const s = settings[idx];
         const newVal = prompt("Enter new value for " + s.name + ":", s.value);
         if (newVal === null) return;
+        // send JSON payload { key, value, password }
         const payload = { key: s.key, value: newVal, password: prompt("Enter instructor password (if required):") };
         fetch("/toggleLocation", {
           method: "POST",
@@ -991,7 +935,7 @@ async function getBoard(env) {
 
 // Ensure default settings exist in KV
 async function ensureDefaultSettings(env) {
-  const exists = await env.SETTINGS.get("InstructorPassword");
+  const exists = await env.SETTINGS.get("LocationVerification");
   if (exists) return;
   const defaults = {
     "LocationVerification": {
@@ -1004,26 +948,15 @@ async function ensureDefaultSettings(env) {
       description: "Allowed capture radius in meters",
       value: "15"
     },
-    "RequirePassword": {
+    "InstructorPassword": {
       name: "Require Instructor Password",
-      description: "Require instructor password for resets, injects, and settings changes?",
-      value: "enabled"
+      description: "Change current instructor password",
+      value: "RESETMADDUCK"
     }
   };
-
-  // create salted hash for default 'password'
-  const instrHash = await createPasswordHash("password");
-  const instrObj = {
-    name: "Instructor Password",
-    description: "Stored instructor password (hidden).",
-    value: instrHash,
-    hidden: true
-  };
-
-  await Promise.all(
-    Object.entries(defaults).map(([k, v]) => env.SETTINGS.put(k, JSON.stringify(v)))
-  );
-  await env.SETTINGS.put("InstructorPassword", JSON.stringify(instrObj));
+  await Promise.all(Object.entries(defaults).map(([k, v]) =>
+    env.SETTINGS.put(k, JSON.stringify(v))
+  ));
 }
 
 // Toggle a single setting value (server-side helper)
@@ -1040,7 +973,7 @@ async function getSettings(request, env) {
   // create defaults if missing
   await ensureDefaultSettings(env);
 
-  const keys = ["LocationVerification", "GeofenceRadius", "RequirePassword", "InstructorPassword"];
+  const keys = ["LocationVerification", "GeofenceRadius", "InstructorPassword"];
   const promises = keys.map(k => env.SETTINGS.get(k, { type: "json" }));
   const data = await Promise.all(promises);
   const items = data.map((obj, i) => ({ key: keys[i], ...obj }));
@@ -1072,11 +1005,9 @@ async function resetBoard(request, env) {
   }
 
   const confirmation = await request.text();
-  // fetch stored instructor password
-  const instr = await env.SETTINGS.get("InstructorPassword", { type: "json" });
-  const instructorStored = instr ? instr.value : "";
-  if (!instructorStored) return new Response("Instructor password not set.", { status: 500 });
-  if (!(await verifyPassword(confirmation, instructorStored))) return new Response("Incorrect reset password.", { status: 400 });
+  if (confirmation !== "RESETMADDUCK") {
+    return new Response("Incorrect reset password.", { status: 400 });
+  }
 
   const data = {
     "1":  { name:"Broncos",    times:[], contracts:[], red:800,  blue:800,  winner:null, enabled:true },
@@ -1116,55 +1047,35 @@ async function resetBoard(request, env) {
  */
 async function toggleLocation(request, env) {
   if (request.method !== "POST") {
-  return new Response("Method Not Allowed", { status: 405 });
+    return new Response("Method Not Allowed", { status: 405 });
   }
 
+  // Expect a simple payload: either instructor password to toggle special action,
+  // or a JSON body with { key, value, password } for regular setting changes.
   const text = await request.text();
 
-  // fetch stored instructor password object
-  const instr = await env.SETTINGS.get("InstructorPassword", { type: "json" });
-  const instructorStored = instr ? instr.value : "";
-  if (!instructorStored) {
-  return new Response("Instructor password not set.", { status: 500 });
+  // If text equals the toggle admin password path from before:
+  if (text === "SETTINGSMADDUCK") {
+    await env.SETTINGS.put("LocationVerification",
+      JSON.stringify({ name: "Location Verification", description: "Query the user's location on contract submission?", value: "enabled" })
+    );
+    return new Response(null, { status: 200 });
   }
 
-  // If caller sent plain password string that matches (used by reset/inject simple flows)
-  if (text && !text.trim().startsWith("{")) {
-  const provided = text.trim();
-  const ok = await verifyPassword(provided, instructorStored);
-  if (!ok) return new Response("Incorrect password.", { status: 400 });
-
-  // Toggle LocationVerification to 'enabled' (original flow)
-  await env.SETTINGS.put("LocationVerification",
-    JSON.stringify({ name: "Location Verification", description: "Query the user's location on contract submission?", value: "enabled" })
-  );
-  return new Response(null, { status: 200 });
-
-  }
-
-  // Otherwise expect JSON { key, value, password } for settings changes
+  // Otherwise expect JSON { key, value, password } to change a setting
   let payload;
   try {
-  payload = JSON.parse(text);
+    payload = JSON.parse(text);
   } catch (e) {
-  return new Response("Invalid payload", { status: 400 });
+    return new Response("Invalid payload", { status: 400 });
   }
 
-  // If RequirePassword setting is enabled, verify instructor password
+  // If RequirePassword setting is enabled, check instructor password
   const requirePwd = await env.SETTINGS.get("RequirePassword", { type: "json" });
   if (requirePwd && requirePwd.value === "enabled") {
-  if (!payload.password) return new Response("Missing password.", { status: 400 });
-  const ok = await verifyPassword(payload.password, instructorStored);
-  if (!ok) return new Response("Incorrect password.", { status: 400 });
-  }
-
-  // If changing InstructorPassword, hash before storing
-  if (payload.key === "InstructorPassword") {
-  if (!payload.value) return new Response("Missing new password.", { status: 400 });
-  const newHash = await createPasswordHash(payload.value);
-  const updated = {name: "Instructor Password (hidden)", description: "Stored instructor password (hidden).", value: newHash, hidden: true };
-  await env.SETTINGS.put("InstructorPassword", JSON.stringify(updated));
-  return new Response(null, { status: 200 });
+    if (!payload.password || payload.password !== "SETTINGSMADDUCK") {
+      return new Response("Incorrect password.", { status: 400 });
+    }
   }
 
   const ok = await updateSettingValue(payload.key, payload.value, env);
@@ -1198,16 +1109,14 @@ var INJECT_TARGETS = { chargers: "3", ravens: "13" };
  * enable inject points as required. -GKT
  */
 async function enableInject(request, env) {
-
   if (request.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
   var confirmation = await request.text();
-  const instr = await env.SETTINGS.get("InstructorPassword", { type: "json" });
-  const instructorStored = instr ? instr.value : "";
-  if (!instructorStored) return new Response("Instructor password not set.", { status: 500 });
-  if (!(await verifyPassword(confirmation, instructorStored))) { return new Response("Forbidden", { status: 403 }); }
+  if (confirmation !== "INJECTMADDUCK") {
+    return new Response("Forbidden", { status: 403 });
+  }
 
   var url = new URL(request.url);
   var type = url.searchParams.get("type");
