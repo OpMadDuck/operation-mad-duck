@@ -7,6 +7,7 @@ compatibility_date = "2025-08-04"
 [[kv_namespaces]]
 binding = "FLAGS"
 id = "ae635740392a4962bbd823ee68b49b7d"
+
 [[kv_namespaces]]
 binding = "SETTINGS"
 id = "5bbf361794f346459763e078f71f293a"

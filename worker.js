@@ -361,11 +361,15 @@ const boardPage = (flags) => `
           name.style.color = '#fff';
           name.style.fontWeight = '700';
           name.textContent = '🏆 ' + flag.name;   // optional flair
+          red.textContent = String(flag.red);
+          redSum += Number(flag.red || 0);
         } else if (winningTeam === 'blue') {
           name.style.backgroundColor = 'rgb(0,0,255)';
           name.style.color = '#fff';
           name.style.fontWeight = '700';
           name.textContent = '🏆 ' + flag.name;   // optional flair
+          blue.textContent = String(flag.blue);
+          blueSum += Number(flag.blue || 0);
         }
       }
 
@@ -550,8 +554,8 @@ const splashPage = `
  * TODO change back!
  */
 const FLAG_COORDS = {
-  // "1": { lat: 30.392045, lon: -88.982127 }, // Testing as Broncos -RC
-  "1": { lat: 30.4062, lon: -88.9197 },  // Broncos
+  "1": { lat: 30.392045, lon: -88.982127 }, // Testing as Broncos -RC
+  //"1": { lat: 30.4062, lon: -88.9197 },  // Broncos
   "2": { lat: 30.4163, lon: -88.9237 },  // Buccaneers
   "3": { lat: 30.4148, lon: -88.9170 },  // Chargers
   "4": { lat: 30.4126, lon: -88.9131 },  // Chiefs
@@ -587,15 +591,18 @@ function calculateDistance(loc1, loc2) {
 }
 
 /** isWithinRadius compares user's current location to predefined flag coordinates.
- * Flags can only be captured if user is within 15m of flag.
+ * Flags can only be captured if user is within range of a flag.
  * Update radiusMeters below to increase/decrease the geofence radius size. -GKT 
  */
-function isWithinRadius(loc1, loc2, radiusMeters = 50) {
-  return calculateDistance(loc1, loc2) <= radiusMeters; // Return result of calculateDistance instead. -GKT
+async function isWithinRadius(loc1, loc2, env) {
+
+  const radiusObj = await env.SETTINGS.get("GeofenceRadius", {type: "json"}); // Query stored radius from Settings KV
+  const radiusMeters = radiusObj ? Number(radiusObj.value) : 15; // Fallback to 15m radius by default -RC
+  return calculateDistance(loc1, loc2) <= radiusMeters;
 }
 
 /*
- * settingsPage (WIP) should return response bodies as strings, which can modify
+ * settingsPage should return response bodies as strings, which can modify
  * various attributes of the simulation.
  */
 const settingsPage = (settings) => `
@@ -633,9 +640,6 @@ const settingsPage = (settings) => `
      </div>
   </body>
   <script>
-    /**
-     * FROM HERE UNTIL toggleLocation IS FROM BOARDPAGE!
-     */
 
     /**
      * Instantiate the array of settings passed in from the worker.
@@ -695,11 +699,6 @@ const settingsPage = (settings) => `
       settingsTable.appendChild(row)
     })
 
-
-    /**
-     * HERE AND BELOW IS FROM RESETPAGE!
-     */
-
     /**
      * toggleLocation consumes a password in the form of a String and posts it
      * back to the Worker to toggle whether location verification is active. If
@@ -737,14 +736,25 @@ const settingsPage = (settings) => `
      * Wait for the user to tap/click the 'Toggle' button on the page.
      */
     document.querySelectorAll("#settingsTable button").forEach((btn, idx) => {
-    btn.addEventListener("click", () => {
-      const key = settings[idx].key || settings[idx].name; // depends on how you structure settings
-      const newVal = prompt("Enter new value for " + settings[idx].name, settings[idx].value);
-      if (newVal === null) return;
-      fetch("/toggleLocation", { method: "POST", body: newVal }) // or a dedicated endpoint
-        .then(res => { if (!res.ok) alert("Error"); else window.location.reload(); });
+      btn.addEventListener("click", () => {
+        const s = settings[idx];
+        const newVal = prompt("Enter new value for " + s.name + ":", s.value);
+        if (newVal === null) return;
+        // send JSON payload { key, value, password }
+        const payload = { key: s.key, value: newVal, password: prompt("Enter instructor password (if required):") };
+        fetch("/toggleLocation", {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json" }
+        }).then((res) => {
+          if (!res.ok) {
+            res.text().then(t => alert("Error: " + t));
+          } else {
+            window.location.reload();
+          }
+        }).catch((err) => alert("Request failed: " + err.message));
+      });
     });
-  });
   </script>
 </html>
 `;
@@ -812,14 +822,26 @@ async function captureFlag(request, env) {
       return new Response("This flag isn't active yet.", { status: 403 });
     }
 
-
     // Distance + radius check
     const distance = calculateDistance(location, target);
-    const inRadius = isWithinRadius(location, target);
+    const inRadius = await isWithinRadius(location, target, env);
 
-    // Decide winner: only if in radius AND not already set
+    // Determine whether location verification is enabled (defaults to enabled)
+    let locationVerificationEnabled = true;
+    try {
+      const locSetting = await env.SETTINGS.get("LocationVerification", { type: "json" });
+    if (locSetting && typeof locSetting.value === "string") {
+      locationVerificationEnabled = (locSetting.value.toLowerCase() === "enabled");
+    }
+    } catch (e) {
+    // on error, keep default (enabled)
+    }
+
+    // Decide winner only if:
+    // - there is no existing winner, AND
+    // - either location verification is disabled (so we accept remote captures) OR the user is inRadius
     let winner = flag.winner;
-    if (inRadius && !winner) {
+    if (!winner && (!locationVerificationEnabled || inRadius)) {
       winner = await check(contract, id, env);
     }
 
@@ -911,19 +933,53 @@ async function getBoard(env) {
   });
 }
 
+// Ensure default settings exist in KV
+async function ensureDefaultSettings(env) {
+  const exists = await env.SETTINGS.get("LocationVerification");
+  if (exists) return;
+  const defaults = {
+    "LocationVerification": {
+      name: "Location Verification",
+      description: "Query the user's location on contract submission?",
+      value: "enabled"
+    },
+    "GeofenceRadius": {
+      name: "Geofence Radius (m)",
+      description: "Allowed capture radius in meters",
+      value: "15"
+    },
+    "InstructorPassword": {
+      name: "Require Instructor Password",
+      description: "Change current instructor password",
+      value: "RESETMADDUCK"
+    }
+  };
+  await Promise.all(Object.entries(defaults).map(([k, v]) =>
+    env.SETTINGS.put(k, JSON.stringify(v))
+  ));
+}
+
+// Toggle a single setting value (server-side helper)
+async function updateSettingValue(key, newValue, env) {
+  const current = await env.SETTINGS.get(key, { type: "json" });
+  if (!current) return false;
+  const updated = { ...current, value: String(newValue) };
+  await env.SETTINGS.put(key, JSON.stringify(updated));
+  return true;
+}
+
 
 async function getSettings(request, env) {
-    // load settings from KV and pass JSON string into template
-    const keys = ["LocationVerification"]; // adjust as needed
-    const promises = keys.map(k => env.SETTINGS.get(k, { type: "json" }));
-    const data = await Promise.all(promises);
-    const body = settingsPage(JSON.stringify(data));
-    return new Response(body, { headers: { "Content-Type": "text/html" } });
-  }
+  // create defaults if missing
+  await ensureDefaultSettings(env);
 
-
-
-
+  const keys = ["LocationVerification", "GeofenceRadius", "InstructorPassword"];
+  const promises = keys.map(k => env.SETTINGS.get(k, { type: "json" }));
+  const data = await Promise.all(promises);
+  const items = data.map((obj, i) => ({ key: keys[i], ...obj }));
+  const body = settingsPage(JSON.stringify(items));
+  return new Response(body, { headers: { "Content-Type": "text/html" } });
+}
 
 /**
  * resetBoard consumes a request forwarded by the handleRequest() function
@@ -990,16 +1046,43 @@ async function resetBoard(request, env) {
  * @returns {Response}
  */
 async function toggleLocation(request, env) {
-    if (request.method !== "POST") return new Response("Method Not Allowed", { status:405 });
-    const confirmation = await request.text();
-    if (confirmation !== "SETTINGSMADDUCK") return new Response("Incorrect password.", { status:400 });
+  if (request.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
+  }
 
-    const cur = await env.SETTINGS.get("LocationVerification", { type: "json" });
-    const enabled = !(cur && cur.value === "enabled");
-    const newObj = { name: "Location Verification", description: "Query the user's location on contract submission?", value: enabled ? "enabled" : "disabled" };
-    await env.SETTINGS.put("LocationVerification", JSON.stringify(newObj));
+  // Expect a simple payload: either instructor password to toggle special action,
+  // or a JSON body with { key, value, password } for regular setting changes.
+  const text = await request.text();
+
+  // If text equals the toggle admin password path from before:
+  if (text === "SETTINGSMADDUCK") {
+    await env.SETTINGS.put("LocationVerification",
+      JSON.stringify({ name: "Location Verification", description: "Query the user's location on contract submission?", value: "enabled" })
+    );
     return new Response(null, { status: 200 });
   }
+
+  // Otherwise expect JSON { key, value, password } to change a setting
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch (e) {
+    return new Response("Invalid payload", { status: 400 });
+  }
+
+  // If RequirePassword setting is enabled, check instructor password
+  const requirePwd = await env.SETTINGS.get("RequirePassword", { type: "json" });
+  if (requirePwd && requirePwd.value === "enabled") {
+    if (!payload.password || payload.password !== "SETTINGSMADDUCK") {
+      return new Response("Incorrect password.", { status: 400 });
+    }
+  }
+
+  const ok = await updateSettingValue(payload.key, payload.value, env);
+  if (!ok) return new Response("Unknown setting.", { status: 400 });
+
+  return new Response(null, { status: 200 });
+}
 
 
 /**
@@ -1090,7 +1173,7 @@ async function handleRequest(request, env, ctx) {
     case "/board":
       return getBoard(env);
     case "/settings":
-      return getSettings(env);
+      return getSettings(request, env);
     case "/toggleLocation":
       return toggleLocation(request, env);
     case "/reset":
