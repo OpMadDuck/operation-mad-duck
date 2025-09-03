@@ -103,7 +103,6 @@ const toolbar = `
     <a href="/reset" style="color: white; margin-right: 15px;">Reset</a>
     <a href="/inject" style="color: white; margin-right: 15px;">Injects</a>
     <a href="/settings" style="color: white; margin-right: 15px;">Settings</a>
-    <a href="https://github.com/OpMadDuck/operation-mad-duck" target="_blank" style="color: white; margin-right: 15px;">GitHub</a>
 </div>
 `;
 
@@ -543,7 +542,6 @@ const splashPage = `
   <a href="/reset">Reset Scoreboard</a><br>
   <a href="/inject">Enable Injects</a><br>
   <a href="/settings">Settings Menu</a><br>
-  <a href="https://github.com/OpMadDuck/operation-mad-duck" target="_blank" style="color: black">GitHub Repository</a><br>
 </body>
 </html>
 `;
