@@ -19,6 +19,12 @@
  * [ ] Breadcrumb tracking?
  * [ ] Penalties based on inverse geofencing? Could have a /penalty page that users get redirected to if they enter fenced-off area that displays penalty timer and prevents contract submission via session cookie?
  * [ ] Add contributor contact information
+ * 
+ * Second XSS remediation:
+ * `getBoard` now uses `safeJsonForHtml(data)` instead of raw `JSON.stringify`.
+ * `getSettings` now uses `safeJsonForHtml(items)` instead of raw `JSON.stringify`.
+ * In `boardPage`’s client-side script, the contracts rendering loop now uses `textContent` and DOM nodes instead of `innerHTML +=`, removing reliance on `escapeHtml` at that spot.
+ * Added `safeJsonForHtml` helper (new).
  */
 
 /**
@@ -372,16 +378,18 @@ const boardPage = (flags) => `
         }
       }
 
+      // ---- Hardened contracts rendering: no innerHTML, use textContent and nodes
       for (var i = 0; i < flag.contracts.length; i++) {
         var isWinner = (i === winningContractID);
-        var line = flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]);
+        var line = flag.times[i] + 'Z - ' + flag.contracts[i];
 
-        if (isWinner) {
-          contracts.innerHTML += '<strong>' + line + '</strong><br>';
-        } else {
-          contracts.innerHTML += '<em>' + line + '</em><br>';
-        }
+        var wrapper = document.createElement(isWinner ? 'strong' : 'em');
+        wrapper.textContent = line; // auto-escapes
+
+        contracts.appendChild(wrapper);
+        contracts.appendChild(document.createElement('br'));
       }
+      // ---- end hardened block
 
       /**
        * Append the newly loaded data into the table row
@@ -886,6 +894,20 @@ function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Safely serialize JSON for embedding inside a <script> tag.
+ * Prevents </script> parse breaks and other JS/HTML context escapes.
+ * (NEW: used by getBoard and getSettings)
+ */
+function safeJsonForHtml(obj) {
+  return JSON.stringify(obj)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 
 /**
  * check consumes a contract statement and flag ID from the captureFlag()
@@ -924,7 +946,8 @@ async function getBoard(env) {
   }
 
   const data = await Promise.all(promises);
-  const body = boardPage(JSON.stringify(data));
+  // HARDENED: safely embed JSON into the <script> tag context
+  const body = boardPage(safeJsonForHtml(data));
   return new Response(body, {
     headers: { "Content-Type": "text/html" },
   });
@@ -974,7 +997,8 @@ async function getSettings(request, env) {
   const promises = keys.map(k => env.SETTINGS.get(k, { type: "json" }));
   const data = await Promise.all(promises);
   const items = data.map((obj, i) => ({ key: keys[i], ...obj }));
-  const body = settingsPage(JSON.stringify(items));
+  // HARDENED: safely embed JSON into the <script> tag context
+  const body = settingsPage(safeJsonForHtml(items));
   return new Response(body, { headers: { "Content-Type": "text/html" } });
 }
 
