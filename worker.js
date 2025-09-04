@@ -602,7 +602,7 @@ function calculateDistance(loc1, loc2) {
 async function isWithinRadius(loc1, loc2, env) {
 
   const radiusObj = await env.SETTINGS.get("GeofenceRadius", {type: "json"}); // Query stored radius from Settings KV
-  const radiusMeters = radiusObj ? Number(radiusObj.value) : 15; // Fallback to 15m radius by default -RC
+  const radiusMeters = radiusObj ? Number(radiusObj.value) : 50; // Fallback to 50m radius by default -RC
   return calculateDistance(loc1, loc2) <= radiusMeters;
 }
 
@@ -966,7 +966,7 @@ async function ensureDefaultSettings(env) {
     "GeofenceRadius": {
       name: "Geofence Radius (m)",
       description: "Allowed capture radius in meters",
-      value: "15"
+      value: "50"
     },
     "RequirePassword": {
       name: "Require Instructor Password",
