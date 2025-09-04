@@ -874,7 +874,7 @@ async function captureFlag(request, env) {
     // If out of radius, alert the user (non-2xx) but we've already logged it
     if (!inRadius) {
       return new Response(
-        `You are outside the allowed radius. Attempt has been logged.\nDistance: ${Math.round(distance)} meters.`,
+        `You are outside the allowed radius. Attempt has been logged.\nDistance: ${Math.round(distance)} meters.\n\n Verify with C2 element to determine if flag capture attempt was successful before reattempting!`,
         { status: 403 }
       );
     }
