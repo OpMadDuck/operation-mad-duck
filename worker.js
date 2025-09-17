@@ -13,6 +13,7 @@
  * [+] Added persistent navigation toolbar
  * [+] Added settings page (scaffold)
  * [+] Only show Chargers and Ravens on scoreboard after inject has been released
+ * [+] Removed navigation from splashPage
  *
  * [ ] To Do:
  * [ ] Find a way to push injects via scoreboard alerts?
@@ -545,12 +546,7 @@ const splashPage = `
 </head>
 <body>
   <h1>Welcome to Operation Mad Duck</h1>
-  <p>Select an option below:</p>
-  <a href="/board">View Scoreboard</a><br>
-  <a href="/reset">Reset Scoreboard</a><br>
-  <a href="/inject">Enable Injects</a><br>
-  <a href="/settings">Settings Menu</a><br>
-</body>
+  <p>Your request has likely timed out!</p>
 </html>
 `;
 
