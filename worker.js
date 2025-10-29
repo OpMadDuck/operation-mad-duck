@@ -1,33 +1,4 @@
-/**
- * Summary of changes:
- * [+] Added input sanitization for XSS vulnerability
- * [+] Added geofencing functionality so users must be within 50 meters when submitting contracts to capture flags
- * [++] NOTE: Geofencing will require users to allow mobile browser location permissions
- * [++] Recommend requiring users to test a QR code together in class prior to ROC drill
- * [+] Added functionality to append user's current location data and distance from flag to scoreboard upon successful submission
- * [+] Added redirect to send user directly to scoreboard upon succesful contract submission for positive verification
- * [+] Removed password text from reset dialog box to ensure only the instructor can reset the scoreboard
- * [+] Added color-coding for successful flag captures to make appearance more appealing
- * [+] Added splashPage html variable and case for visiting / (instead of just a 404 like before)
- * [+] Added buttons to enable inject points, which are now disabled by default
- * [+] Added persistent navigation toolbar
- * [+] Added settings page (scaffold)
- * [+] Only show Chargers and Ravens on scoreboard after inject has been released
- * [+] Removed navigation from splashPage
- *
- * [ ] To Do:
- * [ ] Find a way to push injects via scoreboard alerts?
- * [ ] Breadcrumb tracking?
- * [ ] Penalties based on inverse geofencing? Could have a /penalty page that users get redirected to if they enter fenced-off area that displays penalty timer and prevents contract submission via session cookie?
- * [ ] Add contributor contact information
- * 
- * Second XSS remediation:
- * `getBoard` now uses `safeJsonForHtml(data)` instead of raw `JSON.stringify`.
- * `getSettings` now uses `safeJsonForHtml(items)` instead of raw `JSON.stringify`.
- * In `boardPage`’s client-side script, the contracts rendering loop now uses `textContent` and DOM nodes instead of `innerHTML +=`, removing reliance on `escapeHtml` at that spot.
- * Added `safeJsonForHtml` helper (new).
- */
-
+/*rolled back to very first commit- mln
 /**
  * The HTML formatted CSS style block which includes global styling
  * for all HTML responses. These rules are a minimum requirement
@@ -100,20 +71,6 @@ th, td {
 `;
 
 /**
- * The toolbar is persistent across the scoreboard, reset, and settings pages,
- * allowing for easier navigation. -RC
- */
-const toolbar = `
-<div id="toolbar" style="background-color: #333; color: white; padding: 10px;">
-    <a href="/" style="color: white; margin-right: 15px;">Home</a>
-    <a href="/board" style="color: white; margin-right: 15px;">Scoreboard</a>
-    <a href="/reset" style="color: white; margin-right: 15px;">Reset</a>
-    <a href="/inject" style="color: white; margin-right: 15px;">Injects</a>
-    <a href="/settings" style="color: white; margin-right: 15px;">Settings</a>
-</div>
-`;
-
-/**
  * flagPage consumes a flag object and returns a response body as a string.
  * The response body represents a flag waypoint - the content shown to a
  * user when they scan the appropriate QR code. Additional code is included in
@@ -131,24 +88,24 @@ const flagPage = (flag) => `
   </head>
   <body>
     <div class="container">
-      <div class="subcontainer">
-        <h1>${flag.name} Flag</h1>
-        <h2>Capture!</h2>
-      </div>
+        <div class="subcontainer">
+          <h1>${flag.name} Flag</h1>
+          <h2>Capture!</h2>
+        </div>
     </div>
+  </body>
+  <script>
+    // Save the query strings in the URL
+    const queryString = window.location.search;
 
-    <script>
-      // Save the query strings in the URL
-      const queryString = window.location.search;
+    // Parse the saved search parameters
+    const urlParams = new URLSearchParams(queryString);
 
-      // Parse the saved search parameters  
-      const urlParams = new URLSearchParams(queryString);
+    // Get the value of the ID (must be a value between 1-18)
+    const id = urlParams.get('id')
 
-      // Get the value of the ID (must be a value between 1-18)
-      const id = urlParams.get("id");
-
-      // Prevent the user from seeing the ID in the URL bar
-      window.history.replaceState(null, "", "/");
+    // Prevent the user from seeing the ID in the URL bar
+    window.history.replaceState(null, "", "/");
 
     /**
      * captureFlag consumes a contract in the form of a String and posts it back 
@@ -158,85 +115,34 @@ const flagPage = (flag) => `
      * their contract.
      * @param {String} contract
      */
-      const captureFlag = (contract) => {
-        if (contract) {
-          console.log("About to ask for location...");
-          navigator.geolocation.getCurrentPosition((position) => {
-
-            // Include the user's location and distance from the flag in contract logs. -GKT
-            const userLocation = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude
-            };
-            const targetLocation = ${JSON.stringify(FLAG_COORDS)}; // Inject FLAG_COORDS into the page -GKT
-            const target = targetLocation[id]; // Updated to prevent stringify errors? -GKT
-
-            // Gives user error if bad QR code is scanned prior to geolocation math. -GKT
-            if (!id || !target) {
-              alert("Invalid flag ID.");
-              return;
-            }
-
-            const distance = Math.round(
-              (function calculateDistance(loc1, loc2) {
-                const toRad = (val) => val * Math.PI / 180;
-                const R = 6371e3;
-                const dLat = toRad(loc2.lat - loc1.lat);
-                const dLon = toRad(loc2.lon - loc1.lon);
-                const a = Math.sin(dLat / 2) ** 2 +
-                          Math.cos(toRad(loc1.lat)) * Math.cos(toRad(loc2.lat)) *
-                          Math.sin(dLon / 2) ** 2;
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                return R * c;
-              })(userLocation, target)
-            );
-
-            const payload = {
-              contract,
-              location: userLocation,
-              distance
-            };
-
-            fetch("/capture?id=" + id, {
-              method: "POST",
-              body: JSON.stringify(payload),
-              headers: { "Content-Type": "application/json" }
-            }).then(async (response) => {
-              if (!response.ok) {
-                const errorText = await response.text();
-                alert("Capture failed.\\n" +
-                      "Your location: (" + payload.location.lat.toFixed(6) + ", " + payload.location.lon.toFixed(6) + ")\\n" +
-                      errorText);
-              } else {
-                window.location.replace("/confirm");
-              }
-            }).catch((err) => {
-              alert("Unexpected error submitting contract: " + err.message);
-            });
-          }, (error) => {
-            alert("Geolocation is required to capture this flag.\\n\\n" +
-                  "Error: " + error.message + "\\n" +
-                  "Please enable location access in your browser settings and reload the page.");
-          });
-        }
-      };
+    var captureFlag = (contract) => {
+      if (contract) {
+        fetch("/capture?id=" + id, { method: "POST", body: contract })
+        .then((response) => {
+          if (!response.ok) {
+            alert("HTTP Error " + response.status + ". Please try again.");
+          } else {
+            window.location.replace("/confirm");
+          }
+        })
+      }
+    }
 
     /**
      * requestContract prompts the user to submit their team's contract to 
      * capture the flag, and then passes the result to the captureFlag function.
      * @param {Event} _event
      */
-      const requestContract = () => {
-        const contract = prompt("Please enter your team's contract:");
-        captureFlag(contract);
-      };
+    var requestContract = (_event) => {
+      let contract = prompt("Please enter your team's contract:");
+      captureFlag(contract)
+    }
 
     /**
      * Wait for the user to tap/click the 'Capture!' button on the page.
      */
-      document.querySelector("h2").addEventListener("click", requestContract);
-    </script>
-  </body> <!-- Moved /body tag to encompass JS code section due to button click (document.querySelector("h2") returning null. -GKT -->
+    document.querySelector("h2").addEventListener("click", requestContract)
+  </script>
 </html>
 `;
 
@@ -253,11 +159,10 @@ const boardPage = (flags) => `
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | Scoreboard</title>
+    <title>Operation Mad Duck | Score Board</title>
     ${style}
   </head>
   <body>
-    ${toolbar}
     <div class="container">
       <div class="subcontainer">
         <table>
@@ -337,60 +242,31 @@ const boardPage = (flags) => `
        * which won this flag. Assign the correct point
        * value to the winning team and add it to the
        * total point value for the team.
-       * Keep both team and index for color-coded contract submissions. -GKT
        */
-
-      name.textContent = flag.name || "";
-      if (flag.enabled === false) {
-        name.textContent += " (disabled)";
-        name.style.opacity = "0.6";
-      };
-
-      // Determine winner
-      var winningTeam = null;
-      var winningContractID = -1;
-
-      if (flag.winner) {
-        var parts = flag.winner.split(',');
-        winningTeam = parts[0];                 // 'red' or 'blue'
-        winningContractID = parseInt(parts[1], 10);
-
-        if (winningTeam === 'red') {
-          red.textContent = String(flag.red);
-        } else if (winningTeam === 'blue') {
-          blue.textContent = String(flag.blue);
-        }
-
-        // Style the flag name cell to indicate winner
-        if (winningTeam === 'red') {
-          name.style.backgroundColor = 'rgb(255,0,0)';
-          name.style.color = '#fff';
-          name.style.fontWeight = '700';
-          name.textContent = '🏆 ' + flag.name;   // optional flair
-          red.textContent = String(flag.red);
-          redSum += Number(flag.red || 0);
-        } else if (winningTeam === 'blue') {
-          name.style.backgroundColor = 'rgb(0,0,255)';
-          name.style.color = '#fff';
-          name.style.fontWeight = '700';
-          name.textContent = '🏆 ' + flag.name;   // optional flair
-          blue.textContent = String(flag.blue);
-          blueSum += Number(flag.blue || 0);
+      let winningContractID;
+      if(flag.winner) {
+        let winnerArray = flag.winner.split(',')
+        winningContractID = parseInt(winnerArray[1])
+        if (winnerArray[0] === 'red') {
+          redSum += flag.red
+          red.innerHTML = flag.red
+        } else if (winnerArray[0] === 'blue') {
+          blueSum += flag.blue
+          blue.innerHTML = flag.blue
         }
       }
 
-      // ---- Hardened contracts rendering: no innerHTML, use textContent and nodes
-      for (var i = 0; i < flag.contracts.length; i++) {
-        var isWinner = (i === winningContractID);
-        var line = flag.times[i] + 'Z - ' + flag.contracts[i];
-
-        var wrapper = document.createElement(isWinner ? 'strong' : 'em');
-        wrapper.textContent = line; // auto-escapes
-
-        contracts.appendChild(wrapper);
-        contracts.appendChild(document.createElement('br'));
+      /**
+       * Style the contract log, italicizing the improper
+       * contracts, and bolding the proper/winning contract.
+       */
+      for (let i = 0; i < flag.contracts.length; i++) {
+        if (i === winningContractID) {
+          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>'
+        } else {
+          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>'
+        }
       }
-      // ---- end hardened block
 
       /**
        * Append the newly loaded data into the table row
@@ -426,7 +302,6 @@ const resetPage = `
     ${style}
   </head>
   <body>
-    ${toolbar}
     <div class="container">
       <div class="subcontainer">
         <h2>Reset!</h2>
@@ -452,7 +327,7 @@ const resetPage = `
           }
         })
       } else {
-        alert("Please enter instructor password.")
+        alert("Please enter RESETMADDUCK in all caps.")
       }
     }
 
@@ -462,7 +337,7 @@ const resetPage = `
      * @param {Event} _event
      */
     var requestConfirmation = (_event) => {
-      let confirmation = prompt("Please enter instructor password to reset the scoreboard:");
+      let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
       reset(confirmation)
     }
 
@@ -475,318 +350,24 @@ const resetPage = `
 `;
 
 /**
- * injectPage returns a response body as a string. The response body contains
- * buttons which will enable new points to be captured and populate them on
- * the score board. A board reset will revert these points to a deactivated state. -GKT
- */
-const injectPage = `
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | Injects</title>
-    ${style}
-  </head>
-  <body>
-    ${toolbar}
-    <div class="container">
-      <div class="subcontainer">
-        <h2 data-type="chargers">Enable Chargers Inject!</h2>
-        <h2 data-type="ravens">Enable Ravens Inject!</h2>
-      </div>
-     </div>
-  </body>
-  <script>
-    function callInject(qs, confirmation) {
-      return fetch("/inject" + qs, { method: "POST", body: confirmation });
-    }
-
-    function requestConfirmation(ev) {
-      var el = ev.currentTarget;
-      var type = el.getAttribute("data-type");
-      var confirmation = prompt("Please enter instructor password to enable the new point:");
-      if (!confirmation) return;
-
-      var qs = "?type=" + encodeURIComponent(type);
-      callInject(qs, confirmation).then(function(res) {
-        if (!res.ok) alert("Please enter instructor password.");
-        else window.location.href = "/board";
-      }).catch(function(err) {
-        alert("Unexpected error: " + err.message);
-      });
-    }
-
-    var buttons = document.querySelectorAll("h2[data-type]");
-    for (var i = 0; i < buttons.length; i++) {
-      buttons[i].addEventListener("click", requestConfirmation);
-    }
-  </script>
-</html>
-`;
-
-
-/**
- * splashPage returns a response body as a string. The response body contains
- * a simple landing page for Operation Mad Duck with links to key game
- * functions, such as viewing the scoreboard and capturing flags. It serves
- * as the default page when visiting the root ("/") of the Worker. -GKT
- */
-const splashPage = `
-<!DOCTYPE html>
-<html>
-<head>
-<title>Operation Mad Duck</title>
-<style>
-  body { font-family: Arial, sans-serif; text-align: center; margin-top: 10%; }
-  h1 { color: #333; }
-  a { display: inline-block; margin: 10px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
-  a:hover { background: #0056b3; }
-</style>
-</head>
-<body>
-  <h1>Welcome to Operation Mad Duck</h1>
-  <p>Your request has likely timed out!</p>
-</html>
-`;
-
-
-/**
- * FLAG_COORDS contains coordinates of each flag for geofencing. Adjust as needed. -GKT
- * TODO change back!
- */
-const FLAG_COORDS = {
-  "1": { lat: 30.4062, lon: -88.9197 },  // Broncos
-  "2": { lat: 30.4163, lon: -88.9237 },  // Buccaneers
-  "3": { lat: 30.4148, lon: -88.9170 },  // Chargers
-  "4": { lat: 30.4126, lon: -88.9131 },  // Chiefs
-  "5": { lat: 30.4049, lon: -88.9123 },  // Commanders
-  "6": { lat: 30.4006, lon: -88.9139 },  // Cowboys
-  "7": { lat: 30.4100, lon: -88.9132 },  // Dolphins
-  "8": { lat: 30.4081, lon: -88.9191 },  // Eagles
-  "9": { lat: 30.4010, lon: -88.9284 },  // Giants
-  "10": { lat: 30.4112, lon: -88.9127 }, // Jaguars 
-  "11": { lat: 30.4089, lon: -88.9063 }, // Jets 
-  "12": { lat: 30.4137, lon: -88.9094 }, // Patriots 
-  "13": { lat: 30.4089, lon: -88.9132 }, // Ravens 
-  "14": { lat: 30.3987, lon: -88.9293 }, // Saints 
-  "15": { lat: 30.4051, lon: -88.9098 }, // Seahawks 
-  "16": { lat: 30.4105, lon: -88.9107 }, // Texans 
-  "17": { lat: 30.4003, lon: -88.9282 }, // Titans
-  "18": { lat: 30.3995, lon: -88.9109 }  // Vikings
-};
-
-/** calculateDistance shows the user's current distance from the specified flag. -GKT
- */
-
-function calculateDistance(loc1, loc2) {
-  const toRad = (val) => val * Math.PI / 180;
-  const R = 6371e3; // meters
-  const dLat = toRad(loc2.lat - loc1.lat);
-  const dLon = toRad(loc2.lon - loc1.lon);
-  const a = Math.sin(dLat / 2) ** 2 +
-            Math.cos(toRad(loc1.lat)) * Math.cos(toRad(loc2.lat)) *
-            Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-/** isWithinRadius compares user's current location to predefined flag coordinates.
- * Flags can only be captured if user is within range of a flag.
- * Update radiusMeters below to increase/decrease the geofence radius size. -GKT 
- */
-async function isWithinRadius(loc1, loc2, env) {
-
-  const radiusObj = await env.SETTINGS.get("GeofenceRadius", {type: "json"}); // Query stored radius from Settings KV
-  const radiusMeters = radiusObj ? Number(radiusObj.value) : 50; // Fallback to 50m radius by default -RC
-  return calculateDistance(loc1, loc2) <= radiusMeters;
-}
-
-/*
- * settingsPage should return response bodies as strings, which can modify
- * various attributes of the simulation.
- */
-const settingsPage = (settings) => `
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Operation Mad Duck | Settings</title>
-    ${style}
-  </head>
-  <body>
-    ${toolbar}
-    <div class="container">
-      <div class="subcontainer">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:15%">Name</th>
-              <th style="width:65%">Description</th>
-              <th style="width:10%">Value</th>
-              <th style="width:10%">Modify</th>
-            </tr>
-          </thead>
-          <tbody id='settingsTable'>
-          </tbody>
-          <tr>
-            <th id='name'></th>
-            <th id='description'></th>
-            <th id='value'></th>
-            <th id='modify'></th>
-          </tr>
-        </table>
-      </div>
-     </div>
-  </body>
-  <script>
-
-    /**
-     * Instantiate the array of settings passed in from the worker.
-     */
-    const settings = ${settings}
-
-    /**
-     * escapeHtml sanitizes potentially dangerous javascript input.
-     * This helps prevent accidentally or intentionally unanticipated
-     * manipulation of the flag scoring and tracking mechanics.
-     */
-    function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    /**
-     * Identify the score board table by its HTML ID
-     */
-    const settingsTable = document.querySelector("#settingsTable")
-
-
-    settings.forEach((setting) => {
-      /**
-       * Create the HTML elements for the row
-       * that will represent this flag, including:
-       * - The setting name
-       * - A description of the setting
-       * - The current value of the setting
-       * - A button to allow editing the setting
-       */
-      var row = document.createElement("tr")
-      var name = document.createElement("td")
-      var description = document.createElement("td")
-      var value = document.createElement("td")
-      var modify = document.createElement("td")
-
-      /**
-       * Populate the elements
-       */
-      name.innerHTML = setting.name
-      description.innerHTML = setting.description
-      value.innerHTML = setting.value
-      modify.innerHTML = "<button>modify</button>"
-
-      /**
-       * Append the newly loaded data into the table row
-       */
-      row.appendChild(name)
-      row.appendChild(description)
-      row.appendChild(value)
-      row.appendChild(modify)
-      settingsTable.appendChild(row)
-    })
-
-    /**
-     * toggleLocation consumes a password in the form of a String and posts it
-     * back to the Worker to toggle whether location verification is active. If
-     * the server accepts the password, the settings menu will reload. If the
-     * server encounters an error, then the user will be prompted to reattempt.
-     * @param {String} confirmation
-     */
-
-    var toggleLocation = (confirmation) => {
-      if (confirmation === 'SETTINGSMADDUCK') {
-        fetch("/toggleLocation", { method: "POST", body: confirmation })
-        .then((response) => {
-          if (!response.ok) {
-            alert("HTTP Error " + response.status + ". Please try again.");
-          } else {
-            window.location.href = "/settings";
-          }
-        })
-      } else {
-        alert("Please enter instructor password.")
-      }
-    }
-
-    /**
-     * requestConfirmation prompts the user to submit their proper confirmation
-     * message to reset the game.
-     * @param {Event} _event
-     */
-    var requestConfirmation = (_event) => {
-      let confirmation = prompt("Please enter instructor password:");
-      toggleLocation(confirmation)
-    }
-
-    /**
-     * Wait for the user to tap/click the 'Toggle' button on the page.
-     */
-    document.querySelectorAll("#settingsTable button").forEach((btn, idx) => {
-      btn.addEventListener("click", () => {
-        const s = settings[idx];
-        const newVal = prompt("Enter new value for " + s.name + ":", s.value);
-        if (newVal === null) return;
-        // send JSON payload { key, value, password }
-        const payload = { key: s.key, value: newVal, password: prompt("Enter instructor password (if required):") };
-        fetch("/toggleLocation", {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "application/json" }
-        }).then((res) => {
-          if (!res.ok) {
-            res.text().then(t => alert("Error: " + t));
-          } else {
-            window.location.reload();
-          }
-        }).catch((err) => alert("Request failed: " + err.message));
-      });
-    });
-  </script>
-</html>
-`;
-
-/**
  * getFlag consumes a request forwarded by the handleRequest() function
  * and supplies a dynamic Response containing a flagPage.
  * @param {Request} request
  * @returns {Response}
- * Updated scope for env. -GKT
  */
-async function getFlag(request, env) {
+async function getFlag(request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
-  if (!id) return new Response("Missing id", { status: 400 });
-
-  const flag = await env.FLAGS.get(id.toString(), { type: "json" });
-
-  // Determine if flag exists
-  if (!flag) return new Response("The requested resource could not be found 🦆", { status: 404 });
-
-  // Only block if explicitly disabled AND no winner yet
-  if (flag.enabled === false && !flag.winner) {
-    return new Response("This flag isn't active yet.", { status: 403 });
+  const flag = await FLAGS.get(id.toString(), { type: "json" });
+  if (flag === null) {
+    return new Response("The requested resource could not be found 🦆", {
+      status: 404,
+    });
   }
 
   const body = flagPage(flag);
   return new Response(body, {
-    headers: { "Content-Type": "text/html",
-    "Permissions-Policy": "geolocation=self" // Added Permissions-Policy header for mobile browser compatibility (especially Safari). -GKT
-    },
+    headers: { "Content-Type": "text/html" },
   });
 }
 
@@ -796,114 +377,35 @@ async function getFlag(request, env) {
  * After passing all required checks, data is updated in the KV store.
  * @param {Request} request
  * @returns {Response}
- * Updated scope for env. -GKT
- * Updated captureFlag to ensure contract submissions are logged on scoreboard
- * regardless of location. -GKT
  */
-async function captureFlag(request, env) {
+async function captureFlag(request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-
-    const json = await request.json();
-    const contract = json.contract;
-    const location = json.location;
-
-    const target = FLAG_COORDS[id];
-    if (!location || !target) {
-      return new Response("Missing geolocation data or invalid flag ID.", { status: 400 });
+    const contract = await request.text();
+    const flag = await FLAGS.get(id, { type: "json" });
+    let winner;
+    if (flag.winner) {
+      winner = flag.winner;
+    } else {
+      winner = await check(contract, id);
     }
-
-    // Load current flag
-    const flag = await env.FLAGS.get(id, { type: "json" });
-    if (!flag) return new Response("Flag not found in KV store.", { status: 404 });
-    //if (!flag.enabled) return new Response("This flag has not been activated yet.", { status: 403 });
-    // Only block if explicitly disabled AND no winner yet
-    if (flag.enabled === false && !flag.winner) {
-      return new Response("This flag isn't active yet.", { status: 403 });
-    }
-
-    // Distance + radius check
-    const distance = calculateDistance(location, target);
-    const inRadius = await isWithinRadius(location, target, env);
-
-    // Determine whether location verification is enabled (defaults to enabled)
-    let locationVerificationEnabled = true;
-    try {
-      const locSetting = await env.SETTINGS.get("LocationVerification", { type: "json" });
-    if (locSetting && typeof locSetting.value === "string") {
-      locationVerificationEnabled = (locSetting.value.toLowerCase() === "enabled");
-    }
-    } catch (e) {
-    // on error, keep default (enabled)
-    }
-
-    // Decide winner only if:
-    // - there is no existing winner, AND
-    // - either location verification is disabled (so we accept remote captures) OR the user is inRadius
-    let winner = flag.winner;
-    if (!winner && (!locationVerificationEnabled || inRadius)) {
-      winner = await check(contract, id, env);
-    }
-
-    // Build the contract line to store (always store attempt)
-    const contractLine =
-      `${contract} (Location: ${location.lat.toFixed(5)}, ${location.lon.toFixed(5)} | ` +
-      `Distance: ${Math.round(distance)}m${inRadius ? "" : " | OOR"})`;
-
-    // Persist attempt regardless of radius
-    await env.FLAGS.put(
+    await FLAGS.put(
       id,
       JSON.stringify({
         name: flag.name,
         times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
-        //contracts: flag.contracts.concat(contractLine),
-        contracts: flag.contracts.concat(
-        `${contract} (Location: ${location.lat.toFixed(5)}, ${location.lon.toFixed(5)} | Distance from target: ${Math.round(distance)}m)`),
+        contracts: flag.contracts.concat(contract),
         red: flag.red,
         blue: flag.blue,
-        winner: winner, // unchanged if out-of-radius or regex didn't match
-        enabled: (flag.enabled ?? true)
+        winner: winner,
       })
     );
-
-    // If out of radius, alert the user (non-2xx) but we've already logged it
-    if (!inRadius) {
-      return new Response(
-        `You are outside the allowed radius. Attempt has been logged.\nDistance: ${Math.round(distance)} meters.\n\n Verify with C2 element to determine if flag capture attempt was successful before reattempting!`,
-        { status: 403 }
-      );
-    }
-
-    // In radius -> normal success
     return new Response(null, { status: 200 });
   } catch (err) {
-    return new Response("Error: " + err.toString(), { status: 500 });
+    return new Response(err, { status: 500 });
   }
 }
-
-/**
- * escapeRegExp performs contract input validation for consistent contracts. -GKT
- */
-
-function escapeRegExp(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/**
- * Safely serialize JSON for embedding inside a <script> tag.
- * Prevents </script> parse breaks and other JS/HTML context escapes.
- * (NEW: used by getBoard and getSettings)
- */
-function safeJsonForHtml(obj) {
-  return JSON.stringify(obj)
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026')
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029');
-}
-
 
 /**
  * check consumes a contract statement and flag ID from the captureFlag()
@@ -913,18 +415,23 @@ function safeJsonForHtml(obj) {
  * @param {String} id
  * @returns {String} winningTeam,winningContract
  */
-async function check(contract, id, env) {
-  const flag = await env.FLAGS.get(id, { type: "json" });
-  // Updated variables below for more consistent regex checks via escapeRegExp(). -GKT
-  const safeName = escapeRegExp(flag.name);
-  const redExp  = new RegExp(`Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${safeName}`, "i");
-  const blueExp = new RegExp(`Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${safeName}`, "i");
-
-  const idx = Array.isArray(flag.contracts) ? flag.contracts.length : 0;
-
-  if (redExp.test(contract))  return "red," + idx;
-  if (blueExp.test(contract)) return "blue," + idx;
-  return null;
+async function check(contract, id) {
+  const flag = await FLAGS.get(id, { type: "json" });
+  const redExp = new RegExp(
+    `Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
+    "i"
+  );
+  const blueExp = new RegExp(
+    `Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
+    "i"
+  );
+  if (redExp.test(contract)) {
+    return "red," + flag.contracts.length;
+  } else if (blueExp.test(contract)) {
+    return "blue," + flag.contracts.length;
+  } else {
+    return null;
+  }
 }
 
 /**
@@ -932,70 +439,19 @@ async function check(contract, id, env) {
  * and returns a response with boardPage in the body. All data must be
  * retrieved from the KV store prior to issuing a Response.
  * @returns {Response}
- * Updated scope for env. -GKT
  */
-async function getBoard(env) {
+async function getBoard() {
   const promises = [];
 
   for (const key of Array(18).keys()) {
-    promises.push(env.FLAGS.get((key + 1).toString(), { type: "json" }));
+    promises.push(FLAGS.get((key + 1).toString(), { type: "json" }));
   }
 
   const data = await Promise.all(promises);
-  // HARDENED: safely embed JSON into the <script> tag context
-  const body = boardPage(safeJsonForHtml(data));
+  const body = boardPage(JSON.stringify(data));
   return new Response(body, {
     headers: { "Content-Type": "text/html" },
   });
-}
-
-// Ensure default settings exist in KV
-async function ensureDefaultSettings(env) {
-  const exists = await env.SETTINGS.get("LocationVerification");
-  if (exists) return;
-  const defaults = {
-    "LocationVerification": {
-      name: "Location Verification",
-      description: "Query the user's location on contract submission?",
-      value: "enabled"
-    },
-    "GeofenceRadius": {
-      name: "Geofence Radius (m)",
-      description: "Allowed capture radius in meters",
-      value: "50"
-    },
-    "RequirePassword": {
-      name: "Require Instructor Password",
-      description: "Require instructor password? [KEEP ENABLED]",
-      value: "enabled"
-    }
-  };
-  await Promise.all(Object.entries(defaults).map(([k, v]) =>
-    env.SETTINGS.put(k, JSON.stringify(v))
-  ));
-}
-
-// Toggle a single setting value (server-side helper)
-async function updateSettingValue(key, newValue, env) {
-  const current = await env.SETTINGS.get(key, { type: "json" });
-  if (!current) return false;
-  const updated = { ...current, value: String(newValue) };
-  await env.SETTINGS.put(key, JSON.stringify(updated));
-  return true;
-}
-
-
-async function getSettings(request, env) {
-  // create defaults if missing
-  await ensureDefaultSettings(env);
-
-  const keys = ["LocationVerification", "GeofenceRadius", "RequirePassword"];
-  const promises = keys.map(k => env.SETTINGS.get(k, { type: "json" }));
-  const data = await Promise.all(promises);
-  const items = data.map((obj, i) => ({ key: keys[i], ...obj }));
-  // HARDENED: safely embed JSON into the <script> tag context
-  const body = settingsPage(safeJsonForHtml(items));
-  return new Response(body, { headers: { "Content-Type": "text/html" } });
 }
 
 /**
@@ -1004,112 +460,96 @@ async function getSettings(request, env) {
  * the game state. After passing all required checks, data is reset in the KV store.
  * @param {Request} request
  * @returns {Response}
- * Updated scope for env. -GKT
- * 
- * To update the point values for each flag, change the values in resetBoard below.
- * Once the scoreboard is reset, it will await contract submission and award the points 
- * listed below if all criteria are met. 
- * 
- * The points can also be reset in the KV pairs section of the Cloudflare deployment. 
- * These are the default/original values, so these values appear until a reset happens. 
- * Once a reset happens, the KV pairs are overwritten with whatever is defined below. 
- * Therefore, the values below SHOULD match the KV pair values, but don't necessarily have to. -GKT
- * 
  */
-async function resetBoard(request, env) {
-  if (request.method !== "POST") {
-    return new Response(resetPage, { headers: { "Content-Type": "text/html" } });
-  }
-
-  const confirmation = await request.text();
-  if (confirmation !== "RESETMADDUCK") {
-    return new Response("Incorrect reset password.", { status: 400 });
-  }
-
-  const data = {
-    "1":  { name:"Broncos",    times:[], contracts:[], red:800,  blue:800,  winner:null, enabled:true },
-    "2":  { name:"Buccaneers", times:[], contracts:[], red:0,    blue:1200, winner:null, enabled:true },
-    "3":  { name:"Chargers",   times:[], contracts:[], red:400,  blue:400,  winner:null, enabled:false }, // inject point
-    "4":  { name:"Chiefs",     times:[], contracts:[], red:800,  blue:200,  winner:null, enabled:true },
-    "5":  { name:"Commanders", times:[], contracts:[], red:400,  blue:400,  winner:null, enabled:true },
-    "6":  { name:"Cowboys",    times:[], contracts:[], red:600,  blue:400,  winner:null, enabled:true },
-    "7":  { name:"Dolphins",   times:[], contracts:[], red:600,  blue:600,  winner:null, enabled:true },
-    "8":  { name:"Eagles",     times:[], contracts:[], red:400,  blue:400,  winner:null, enabled:true },
-    "9":  { name:"Giants",     times:[], contracts:[], red:200,  blue:600,  winner:null, enabled:true },
-    "10": { name:"Jaguars",    times:[], contracts:[], red:800,  blue:200,  winner:null, enabled:true },
-    "11": { name:"Jets",       times:[], contracts:[], red:200,  blue:200,  winner:null, enabled:true },
-    "12": { name:"Patriots",   times:[], contracts:[], red:800,  blue:200,  winner:null, enabled:true },
-    "13": { name:"Ravens",     times:[], contracts:[], red:200,  blue:200,  winner:null, enabled:false }, //inject point
-    "14": { name:"Saints",     times:[], contracts:[], red:200,  blue:600,  winner:null, enabled:true },
-    "15": { name:"Seahawks",   times:[], contracts:[], red:800,  blue:200,  winner:null, enabled:true },
-    "16": { name:"Texans",     times:[], contracts:[], red:200,  blue:800,  winner:null, enabled:true },
-    "17": { name:"Titans",     times:[], contracts:[], red:1200, blue:600,  winner:null, enabled:true },
-    "18": { name:"Vikings",    times:[], contracts:[], red:200,  blue:800,  winner:null, enabled:true }
-  };
-
-  await Promise.all(Object.entries(data).map(([k, v]) =>
-    env.FLAGS.put(k, JSON.stringify(v))
-  ));
-
-  return new Response(null, { status: 200 });
-}
-
-/**
- * toggleLocation consumes a request forwarded by the handleRequest() function
- * and runs a check on the submitted confirmation message prior to toggling
- * whether location verification is active. After passing all required checks,
- * the setting is toggled in the KV store.
- * @param {Request} request
- * @returns {Response}
- */
-async function toggleLocation(request, env) {
-  if (request.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
-  }
-
-  // Expect a simple payload: either instructor password to toggle special action,
-  // or a JSON body with { key, value, password } for regular setting changes.
-  const text = await request.text();
-
-  // If text equals the toggle admin password path from before:
-  if (text === "SETTINGSMADDUCK") {
-    await env.SETTINGS.put("LocationVerification",
-      JSON.stringify({ name: "Location Verification", description: "Query the user's location on contract submission?", value: "enabled" })
-    );
-    return new Response(null, { status: 200 });
-  }
-
-  // Otherwise expect JSON { key, value, password } to change a setting
-  let payload;
-  try {
-    payload = JSON.parse(text);
-  } catch (e) {
-    return new Response("Invalid payload", { status: 400 });
-  }
-
-  // If RequirePassword setting is enabled, check instructor password
-  const requirePwd = await env.SETTINGS.get("RequirePassword", { type: "json" });
-  if (requirePwd && requirePwd.value === "enabled") {
-    if (!payload.password || payload.password !== "SETTINGSMADDUCK") {
-      return new Response("Incorrect password.", { status: 400 });
+async function resetBoard(request) {
+  if (request.method === "POST") {
+    const confirmation = await request.text();
+    if (confirmation === "RESETMADDUCK") {
+      await FLAGS.put(
+        "1",
+        '{"name":"Broncos", "times":[], "contracts":[], "red":800, "blue":800, "winner":null}'
+      );
+      await FLAGS.put(
+        "2",
+        '{"name":"Buccaneers", "times":[], "contracts":[], "red":0, "blue":1200, "winner":null}'
+      );
+      await FLAGS.put(
+        "3",
+        '{"name":"Chargers", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
+      );
+      await FLAGS.put(
+        "4",
+        '{"name":"Chiefs", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
+      );
+      await FLAGS.put(
+        "5",
+        '{"name":"Commanders", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
+      );
+      await FLAGS.put(
+        "6",
+        '{"name":"Cowboys", "times":[], "contracts":[], "red":600, "blue":400, "winner":null}'
+      );
+      await FLAGS.put(
+        "7",
+        '{"name":"Dolphins", "times":[], "contracts":[], "red":600, "blue":600, "winner":null}'
+      );
+      await FLAGS.put(
+        "8",
+        '{"name":"Eagles", "times":[], "contracts":[], "red":400, "blue":400, "winner":null}'
+      );
+      await FLAGS.put(
+        "9",
+        '{"name":"Giants", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
+      );
+      await FLAGS.put(
+        "10",
+        '{"name":"Jaguars", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
+      );
+      await FLAGS.put(
+        "11",
+        '{"name":"Jets", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
+      );
+      await FLAGS.put(
+        "12",
+        '{"name":"Patriots", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
+      );
+      await FLAGS.put(
+        "13",
+        '{"name":"Ravens", "times":[], "contracts":[], "red":200, "blue":200, "winner":null}'
+      );
+      await FLAGS.put(
+        "14",
+        '{"name":"Saints", "times":[], "contracts":[], "red":200, "blue":600, "winner":null}'
+      );
+      await FLAGS.put(
+        "15",
+        '{"name":"Seahawks", "times":[], "contracts":[], "red":800, "blue":200, "winner":null}'
+      );
+      await FLAGS.put(
+        "16",
+        '{"name":"Texans", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
+      );
+      await FLAGS.put(
+        "17",
+        '{"name":"Titans", "times":[], "contracts":[], "red":1200, "blue":600, "winner":null}'
+      );
+      await FLAGS.put(
+        "18",
+        '{"name":"Vikings", "times":[], "contracts":[], "red":200, "blue":800, "winner":null}'
+      );
+      return new Response(null, { status: 200 });
     }
+  } else {
+    return new Response(resetPage, {
+      headers: { "Content-Type": "text/html" },
+    });
   }
-
-  const ok = await updateSettingValue(payload.key, payload.value, env);
-  if (!ok) return new Response("Unknown setting.", { status: 400 });
-
-  return new Response(null, { status: 200 });
 }
-
 
 /**
  * confirmContract will notify the user that their submitted
  * contract has been logged successfully by the Worker.
  * @returns {Response}
- * 
- * Reverted confirmContract back to original to disable redirect
- * upon successful contract submission, forcing communication 
- * with C2 element. -GKT
  */
 async function confirmContract() {
   return new Response("Contract received 💬", {
@@ -1118,53 +558,6 @@ async function confirmContract() {
   });
 }
 
-// Define which flags will be disabled by default and enabled at instructor discretion. -GKT
-var INJECT_TARGETS = { chargers: "3", ravens: "13" };
-
-/**
- * enableInject will provide a convenient way for instructors to 
- * enable inject points as required. -GKT
- */
-async function enableInject(request, env) {
-  if (request.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
-  }
-
-  var confirmation = await request.text();
-  if (confirmation !== "INJECTMADDUCK") {
-    return new Response("Forbidden", { status: 403 });
-  }
-
-  var url = new URL(request.url);
-  var type = url.searchParams.get("type");
-  var id = INJECT_TARGETS[type];
-  if (!id) {
-    return new Response("Unknown inject type", { status: 400 });
-  }
-
-  var flag = await env.FLAGS.get(id, { type: "json" });
-  if (!flag) {
-    return new Response("Flag not found", { status: 404 });
-  }
-
-  // Flip enabled to true; leave points and everything else untouched
-  var updated = {
-    name: flag.name,
-    times: Array.isArray(flag.times) ? flag.times : [],
-    contracts: Array.isArray(flag.contracts) ? flag.contracts : [],
-    red: flag.red,
-    blue: flag.blue,
-    winner: flag.winner || null,
-    enabled: true
-  };
-
-  await env.FLAGS.put(id, JSON.stringify(updated));
-  await env.FLAGS.put("__last_inject", JSON.stringify({ type: type, id: id, when: Date.now() }));
-
-  return new Response(null, { status: 200 });
-}
-
-
 /**
  * handleRequest consumes a request forwarded by the main event listener.
  * Depending on the URL path, this function defers Responses to the functions
@@ -1172,50 +565,22 @@ async function enableInject(request, env) {
  * a 404 Not Found response is issued to the user. Quack!
  * @param {Request} request
  * @returns {Response}
- * Updated scope for env. -GKT
  */
-async function handleRequest(request, env, ctx) {
+async function handleRequest(request) {
   const url = new URL(request.url);
   const path = url.pathname;
 
   switch (path) {
-    case "/":
-      return new Response(splashPage, {
-        headers: { "Content-Type": "text/html" },
-      });
     case "/flag":
-      return getFlag(request, env);
+      return getFlag(request);
     case "/capture":
-      return captureFlag(request, env);
+      return captureFlag(request);
     case "/board":
-      return getBoard(env);
-    case "/settings":
-      return getSettings(request, env);
-    case "/toggleLocation":
-      return toggleLocation(request, env);
+      return getBoard();
     case "/reset":
-      return resetBoard(request, env);
+      return resetBoard(request);
     case "/confirm":
       return confirmContract();
-    /** 
-     * The following is a little more complicated because enableInject()
-     * modifies data on the server, whereas the other pages/functions are
-     * read-only. Therefore, /inject must use the POST method, whereas the
-     * other cases can use the GET method. -GKT
-     */
-    case "/inject": 
-      if (request.method === "GET") {
-        return new Response(injectPage, {
-          headers: { "Content-Type": "text/html" },
-        });
-      } else if (request.method === "POST") {
-        return enableInject(request, env);
-      } else {
-        return new Response("Method Not Allowed", {
-          status: 405,
-          headers: { "Allow": "GET, POST" },
-        });
-      }
     default:
       return new Response("The requested resource could not be found 🦆", {
         status: 404,
@@ -1226,10 +591,7 @@ async function handleRequest(request, env, ctx) {
 /**
  * Listen for a fetch event. When such an event occurs, respond with
  * the data provided by the handleRequest() function above.
- * Updated syntax to help with Cloudflare build. -GKT
  */
-export default {
-  async fetch(request, env, ctx) {
-    return handleRequest(request, env, ctx);
-  }
-}
+addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event.request));
+});
