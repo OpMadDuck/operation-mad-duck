@@ -422,11 +422,11 @@ async function captureFlag(request, env) {
 async function check(contract, id, env) {
   const flag = await env.FLAGS.get(id, { type: "json" });
   const redExp = new RegExp(
-    \`Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown \${flag.name}\`,
+    `Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
     "i"
   );
   const blueExp = new RegExp(
-    \`Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown \${flag.name}\`,
+    `Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
     "i"
   );
   if (redExp.test(contract)) {
