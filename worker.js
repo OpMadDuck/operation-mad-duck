@@ -475,7 +475,7 @@ async function resetBoard(request, env) {
       );
       await env.FLAGS.put(
         "2",
-        '{"name":"Buccaneers", "times":[], "contracts":[], "red":0, "blue":1200, "winner":null}'
+        '{"name":"Buccaneers", "times":[], "contracts":[], "red":-5000, "blue":5000, "winner":null}'
       );
       await env.FLAGS.put(
         "3",
