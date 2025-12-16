@@ -167,6 +167,10 @@ const flagPage = (flag) => `
  * flags, and the total scores for each team.
  * @param {Array<Object>} flags
  */
+
+/**
+*code below altered by genai.mil to have addition and subtraction aspects of capturing a flag
+*/
 const boardPage = (flags) => \`
 <!DOCTYPE html>
 <html lang="en">
