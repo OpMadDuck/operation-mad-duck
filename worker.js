@@ -471,67 +471,67 @@ async function resetBoard(request, env) {
     if (confirmation === "RESETMADDUCK") {
       await env.FLAGS.put(
         "1",
-        '{"name":"Broncos", "times":[], "contracts":[], "red":-100, "blue":500, "winner":null}'
+        '{"name":"Broncos", "times":[], "contracts":[], "red":100, "blue":500, "winner":null}'
       );
       await env.FLAGS.put(
         "2",
-        '{"name":"Buccaneers", "times":[], "contracts":[], "red":-5000, "blue":5000, "winner":null}'
+        '{"name":"Buccaneers", "times":[], "contracts":[], "red":5000, "blue":5000, "winner":null}'
       );
       await env.FLAGS.put(
         "3",
-        '{"name":"Chargers", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Chargers", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       await env.FLAGS.put(
         "4",
-        '{"name":"Chiefs", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Chiefs", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       await env.FLAGS.put(
         "5",
-        '{"name":"Commanders", "times":[], "contracts":[], "red":-100, "blue":500, "winner":null}'
+        '{"name":"Commanders", "times":[], "contracts":[], "red":100, "blue":500, "winner":null}'
       );
       await env.FLAGS.put(
         "6",
-        '{"name":"Cowboys", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Cowboys", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       await env.FLAGS.put(
         "7",
-        '{"name":"Dolphins", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Dolphins", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       await env.FLAGS.put(
         "8",
-        '{"name":"Eagles", "times":[], "contracts":[], "red":0, "blue":-2000, "winner":null}'
+        '{"name":"Eagles", "times":[], "contracts":[], "red":0, "blue":2000, "winner":null}'
       );
       await env.FLAGS.put(
         "9",
-        '{"name":"Giants", "times":[], "contracts":[], "red":-100, "blue":500, "winner":null}'
+        '{"name":"Giants", "times":[], "contracts":[], "red":100, "blue":500, "winner":null}'
       );
       await env.FLAGS.put(
         "10",
-        '{"name":"Jaguars", "times":[], "contracts":[], "red":-100, "blue":500, "winner":null}'
+        '{"name":"Jaguars", "times":[], "contracts":[], "red":100, "blue":500, "winner":null}'
       );
       await env.FLAGS.put(
         "11",
-        '{"name":"Jets", "times":[], "contracts":[], "red":-2000, "blue":0, "winner":null}'
+        '{"name":"Jets", "times":[], "contracts":[], "red":2000, "blue":0, "winner":null}'
       );
       await env.FLAGS.put(
         "12",
-        '{"name":"Patriots", "times":[], "contracts":[], "red":-100, "blue":500, "winner":null}'
+        '{"name":"Patriots", "times":[], "contracts":[], "red":100, "blue":500, "winner":null}'
       );
       await env.FLAGS.put(
         "13",
-        '{"name":"Ravens", "times":[], "contracts":[], "red":-100, "blue":500, "winner":null}'
+        '{"name":"Ravens", "times":[], "contracts":[], "red":100, "blue":500, "winner":null}'
       );
       await env.FLAGS.put(
         "14",
-        '{"name":"Saints", "times":[], "contracts":[], "red":-100, "blue":500, "winner":null}'
+        '{"name":"Saints", "times":[], "contracts":[], "red":100, "blue":500, "winner":null}'
       );
       await env.FLAGS.put(
         "15",
-        '{"name":"Seahawks", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Seahawks", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       await env.FLAGS.put(
         "16",
-        '{"name":"Texans", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Texans", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       await env.FLAGS.put(
         "17",
@@ -539,7 +539,7 @@ async function resetBoard(request, env) {
       );
       await env.FLAGS.put(
         "18",
-        '{"name":"Vikings", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Vikings", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       return new Response(null, { status: 200 });
     }
