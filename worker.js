@@ -171,7 +171,7 @@ const flagPage = (flag) => `
 /**
 *code below altered by genai.mil to have addition and subtraction aspects of capturing a flag
 */
-const boardPage = (flags) => \`
+const boardPage = (flags) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
