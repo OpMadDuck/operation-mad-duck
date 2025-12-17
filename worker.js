@@ -485,7 +485,7 @@ async function resetBoard(request, env) {
       );
       await env.FLAGS.put(
         "12",
-        '{"name":"Patriots","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}'
+        '{"name":"Patriots","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":0,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
       );
       await env.FLAGS.put(
         "13",
