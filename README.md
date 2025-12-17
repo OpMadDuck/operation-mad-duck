@@ -17,19 +17,38 @@ When developing this project locally, [Miniflare](https://miniflare.dev) is the 
 ### Recommendations
 The `dev` branch is a work-in-progress of migrating the project to an [ACID](https://en.wikipedia.org/wiki/ACID)-compliant framework. This will hopefully fix the issue where logged-contracts can sometimes overwrite each other. Instead of storing flag data an contract logs under the ID for each flag, it is better to store the contracts atomically. The code in the `dev` branch aims to accomplish this by storing contracts in the KV with: the contract statement, a team designation, and the flag id. The scoreboard should then compare these stored contracts with a static array of flag objects to determine realized point values and successfully logged contracts.
 
-## New Features in This Fork
+### New Features along with revised points on 17Dec25
+Of course. It's a great idea to document the evolution of the project. Based on our entire conversation, I have created a summary that details all the features you requested.
 
-### Geolocation-Based Flag Capture
-- Players must physically be within **50 meters** of a flag’s real-world coordinates to capture it.
-- Coordinates are stored per-flag in a central `FLAG_COORDS` dictionary.
-- Distance is calculated on the server using the haversine formula to ensure integrity.
+This summary is written in Markdown, making it perfect for a GitHub `README.md` file or for use in commit messages or release notes.
 
-### Location Feedback
-- If users are outside the allowed range, an alert displays:
-  - Their **current coordinates**
-  - The **exact distance** from the flag
-  - A message that capture failed
+---
 
+### Project Summary: Operation Mad Duck Scoreboard
+
+This Cloudflare Worker project hosts a real-time, interactive scoreboard for a "Capture the Flag" style competition. The system allows users to scan QR codes that link to flag capture pages. The first team to correctly submit their contract for a flag earns points, and the central scoreboard updates dynamically for all viewers.
+
+### Feature Updates
+
+Over the course of development, several key features were added to enhance the game's strategy, user experience, and visual clarity:
+
+#### 1. Dynamic & Asymmetrical Scoring System
+The initial scoring logic was updated to create a more competitive and strategic environment.
+*   **Negative Scoring:** When a team successfully captures a flag, the opposing team's score is now negatively impacted, making each capture more significant.
+*   **Scenario-Based Points:** The point values are asymmetrical and depend on which team makes the capture. The game now supports different point awards for a "Red Team First Capture" versus a "Blue Team First Capture," with unique positive and negative outcomes for each flag.
+
+#### 2. Enhanced Real-Time Scoreboard UI
+The scoreboard interface was significantly improved to provide instant visual feedback and stay current without manual intervention.
+*   **Auto-Refresh:** The page automatically refreshes every 15 seconds, ensuring the scores and capture states are always up-to-date for all viewers.
+*   **Visual Capture Indicator:** Rows for captured flags are now highlighted with the winning team's color (red or blue), and the text is changed to bolded white for high-contrast readability.
+
+#### 3. Game Countdown & Winner Announcement
+A timed game-end sequence was implemented to create a clear conclusion to the competition.
+*   **Persistent 30-Minute Timer:** A "Start Timer" button initiates a global 30-minute countdown. The timer's state is saved in the browser's `localStorage`, ensuring it persists across the 15-second auto-refreshes and manual page loads for a consistent countdown across all clients.
+*   **Game Reset Integration:** The reset function now also clears the timer from `localStorage`, allowing for a clean start to a new game.
+*   **Automated Winner Declaration:** Once the timer expires, a full-screen overlay appears, automatically calculating and declaring the winning team (or a tie) based on the final point totals.
+
+### New from the Fork from Wills Wire...
 ### ⚠Secure Origin Enforcement
 - Chrome, Firefox, and Safari require secure contexts for geolocation access.
 - Use `npx wrangler dev --ip=0.0.0.0 --port=8787` locally and access via `https://` (e.g., via Cloudflare Tunnel or HTTPS proxy) for mobile device testing.
@@ -46,9 +65,9 @@ The `dev` branch is a work-in-progress of migrating the project to an [ACID](htt
 
 | Area | Original | This Fork |
 |------|----------|-----------|
-| `flagPage()` | Basic click handler | Includes geolocation prompt, error feedback, and enhanced alert |
-| `captureFlag()` | Only contract body | Adds full geolocation payload and distance check |
+| `flagPage()` | Basic click handler |
+| `captureFlag()` |
 | `boardPage()` | Direct rendering | Now sanitizes input via `escapeHtml()` |
 | `getFlag()` | No headers | Adds `Permissions-Policy` for location access |
-| New Functions | X | `calculateDistance()`, `isWithinRadius()`, `escapeHtml()` |
+| New Functions | X |`escapeHtml()` |
 
