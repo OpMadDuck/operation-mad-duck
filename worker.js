@@ -1,17 +1,4 @@
 /**
- * Summary of changes (this version):
- * JavaScript-based Auto-Refresh: I will remove the <meta> tag for refreshing the page. Instead, I will use JavaScript to handle the 15-second refresh. This is necessary so that we can have a button to turn this feature on and off.
-* New Control Buttons: I will add a new row of buttons to the scoreboard page for administrative controls:
-* "Stop Timer" Button: This button will stop the 30-minute countdown and remove it from memory, allowing it to be started again.
-* "Toggle Auto-Refresh" Button: This button will turn the 15-second auto-refresh on or off. Its state will be saved so it persists between reloads. It will be "On" by default.
-* "Reset 1" Button: This button will re-hide the "Chargers" flag and re-enable the reveal button "1".
-* "Reset 2" Button: This button will re-hide the "Ravens" flag and re-enable the reveal button "2".
-* Persistent State: All of these new states (auto-refresh on/off, timer stopped, flags re-hidden) will use the browser's localStorage to ensure they work correctly across page reloads.
-*Game Reset Update: The main "RESETMADDUCK" function will be updated to also clear these new states from localStorage, ensuring a completely clean start for the next game.
- 
- */
-
-/**
  * The HTML formatted CSS style block which includes global styling
  * for all HTML responses. These rules are a minimum requirement
  * to display data properly on the flagPage, boardPage, and resetPage.
@@ -126,7 +113,8 @@ th, td {
 #startTimerBtn:disabled {
     background-color: #cccccc;
 }
-.stop-btn { background-color: #ff3b30; } /* Red */
+.pause-btn { background-color: #ff3b30; } /* Red */
+.resume-btn { background-color: #34c759; } /* Green */
 .refresh-btn-on { background-color: #34c759; } /* Green */
 .refresh-btn-off { background-color: #ff3b30; } /* Red */
 .reset-flag-btn { background-color: #5856d6; } /* Indigo */
@@ -254,7 +242,7 @@ const boardPage = (flags) => `
                 <div id="timerDisplay">30:00</div>
             </div>
             <div class="button-row">
-                <button id="stopTimerBtn" class="control-btn stop-btn">Stop Timer</button>
+                <button id="pauseResumeBtn" class="control-btn"></button>
                 <button id="toggleRefreshBtn" class="control-btn"></button>
                 <button id="resetChargersBtn" class="control-btn reset-flag-btn">Reset 1</button>
                 <button id="resetRavensBtn" class="control-btn reset-flag-btn">Reset 2</button>
@@ -357,7 +345,7 @@ const boardPage = (flags) => `
     const resetChargersBtn = document.querySelector("#resetChargersBtn");
     const resetRavensBtn = document.querySelector("#resetRavensBtn");
     const startBtn = document.querySelector("#startTimerBtn");
-    const stopTimerBtn = document.querySelector("#stopTimerBtn");
+    const pauseResumeBtn = document.querySelector("#pauseResumeBtn");
     const timerDisplay = document.querySelector("#timerDisplay");
     const winnerAnnouncer = document.querySelector("#winnerAnnouncer");
     const winnerTextElement = document.querySelector("#winnerText");
@@ -376,7 +364,7 @@ const boardPage = (flags) => `
     resetRavensBtn.addEventListener('click', () => { localStorage.removeItem('ravensRevealed'); window.location.reload(); });
 
     // Auto-Refresh
-    const autoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false'; // Default to true
+    const autoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false';
     if (autoRefreshEnabled) {
         setTimeout(() => window.location.reload(), 15000);
         toggleRefreshBtn.textContent = 'Auto-Refresh: On';
@@ -390,11 +378,32 @@ const boardPage = (flags) => `
       window.location.reload();
     });
 
-    // Timer
-    const startCountdown = () => {
+    // Timer Logic
+    const startInitialCountdown = () => {
         const thirtyMinutes = 30 * 60 * 1000;
         const endTime = new Date().getTime() + thirtyMinutes;
         localStorage.setItem('timerEndTime', endTime);
+        localStorage.removeItem('pausedTime');
+        window.location.reload();
+    };
+
+    const pauseTimer = () => {
+        const endTime = parseInt(localStorage.getItem('timerEndTime'), 10);
+        const remainingTime = endTime - new Date().getTime();
+        if (remainingTime > 0) {
+            localStorage.setItem('pausedTime', remainingTime);
+        }
+        localStorage.removeItem('timerEndTime');
+        window.location.reload();
+    };
+
+    const resumeTimer = () => {
+        const pausedTime = parseInt(localStorage.getItem('pausedTime'), 10);
+        if (pausedTime > 0) {
+            const newEndTime = new Date().getTime() + pausedTime;
+            localStorage.setItem('timerEndTime', newEndTime);
+        }
+        localStorage.removeItem('pausedTime');
         window.location.reload();
     };
     
@@ -408,11 +417,18 @@ const boardPage = (flags) => `
         winnerAnnouncer.style.display = 'flex';
     };
 
+    // Main Timer State Handling on page load
     const storedEndTime = localStorage.getItem('timerEndTime');
-    if (storedEndTime) {
+    const storedPausedTime = localStorage.getItem('pausedTime');
+
+    if (storedEndTime) { // State: Timer is RUNNING
         startBtn.disabled = true;
-        const endTime = parseInt(storedEndTime, 10);
+        pauseResumeBtn.textContent = 'Pause Timer';
+        pauseResumeBtn.className = 'control-btn pause-btn';
+        pauseResumeBtn.disabled = false;
+        pauseResumeBtn.addEventListener('click', pauseTimer);
         
+        const endTime = parseInt(storedEndTime, 10);
         const updateDisplay = () => {
             const now = new Date().getTime();
             const remaining = endTime - now;
@@ -428,14 +444,25 @@ const boardPage = (flags) => `
         };
         updateDisplay();
         timerInterval = setInterval(updateDisplay, 1000);
-    } else {
-        startBtn.addEventListener("click", startCountdown);
-    }
 
-    stopTimerBtn.addEventListener('click', () => {
-        localStorage.removeItem('timerEndTime');
-        window.location.reload();
-    });
+    } else if (storedPausedTime) { // State: Timer is PAUSED
+        startBtn.disabled = true;
+        pauseResumeBtn.textContent = 'Resume Timer';
+        pauseResumeBtn.className = 'control-btn resume-btn';
+        pauseResumeBtn.disabled = false;
+        pauseResumeBtn.addEventListener('click', resumeTimer);
+
+        const remaining = parseInt(storedPausedTime, 10);
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        timerDisplay.textContent = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
+
+    } else { // State: Timer NOT STARTED
+        startBtn.disabled = false;
+        pauseResumeBtn.textContent = 'Pause/Resume';
+        pauseResumeBtn.disabled = true;
+        startBtn.addEventListener('click', startInitialCountdown);
+    }
 
     closeBtn.addEventListener("click", () => {
         winnerAnnouncer.style.display = 'none';
@@ -468,6 +495,7 @@ const resetPage = `
       if (confirmation === 'RESETMADDUCK') {
         // Clear all relevant states from localStorage
         localStorage.removeItem('timerEndTime');
+        localStorage.removeItem('pausedTime');
         localStorage.removeItem('chargersRevealed');
         localStorage.removeItem('ravensRevealed');
         localStorage.removeItem('autoRefresh');
