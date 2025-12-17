@@ -1,9 +1,6 @@
 /**
  * Summary of changes (this version):
- * [-] Removed all geolocation prompts and geofencing checks
- * [-] Removed location/distance from payloads and scoreboard logging
- * [*] Kept all other functionality intact (board, reset, scoring, XSS sanitization)
- * [*] Passed `env` into helper functions for correctness in Module Worker scope
+ * Fixed timer reseting with each auto page refresh
  */
 
 /**
@@ -333,28 +330,14 @@ const boardPage = (flags) => `
     let timerInterval;
 
     const startCountdown = () => {
-        // Disable the button to prevent restarting
-        startBtn.disabled = true;
-
-        let duration = 30 * 60;
-
-        timerInterval = setInterval(() => {
-            const minutes = Math.floor(duration / 60);
-            const seconds = duration % 60;
-
-            timerDisplay.textContent = 
-                String(minutes).padStart(2, '0') + ":" + 
-                String(seconds).padStart(2, '0');
-            
-            duration--;
-
-            if (duration < 0) {
-                clearInterval(timerInterval);
-                announceWinner();
-            }
-        }, 1000);
+        const thirtyMinutes = 30 * 60 * 1000;
+        const endTime = new Date().getTime() + thirtyMinutes;
+        localStorage.setItem('timerEndTime', endTime);
+        
+        // Reload to sync the timer across all clients and start the countdown
+        window.location.reload();
     };
-
+    
     const announceWinner = () => {
         let winnerText = "THE WINNER IS ";
         if (redSum > blueSum) {
@@ -369,7 +352,33 @@ const boardPage = (flags) => `
         winnerAnnouncer.style.display = 'flex';
     };
 
-    startBtn.addEventListener("click", startCountdown);
+    // On page load, check if a timer is running
+    const storedEndTime = localStorage.getItem('timerEndTime');
+
+    if (storedEndTime) {
+        startBtn.disabled = true; // Timer is active, disable button
+        const endTime = parseInt(storedEndTime, 10);
+        
+        const updateDisplay = () => {
+            const now = new Date().getTime();
+            const remaining = endTime - now;
+
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = '00:00';
+                announceWinner();
+            } else {
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+                timerDisplay.textContent = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
+            }
+        };
+        
+        updateDisplay(); // Update immediately on load
+        timerInterval = setInterval(updateDisplay, 1000);
+    } else {
+        startBtn.addEventListener("click", startCountdown);
+    }
   </script>
 </html>
 `;
@@ -405,6 +414,7 @@ const resetPage = `
      */
     var reset = (confirmation) => {
       if (confirmation === 'RESETMADDUCK') {
+        localStorage.removeItem('timerEndTime'); // Clear the timer from storage
         fetch("/reset", { method: "POST", body: confirmation })
         .then((response) => {
           if (!response.ok) {
