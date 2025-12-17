@@ -1,5 +1,9 @@
 /**
- * Updated scoring to reflect a different values depending on which team captures a flag succesfully to correct point values"
+ * Summary of changes (this version):
+ * [-] Removed all geolocation prompts and geofencing checks
+ * [-] Removed location/distance from payloads and scoreboard logging
+ * [*] Kept all other functionality intact (board, reset, scoring, XSS sanitization)
+ * [*] Passed `env` into helper functions for correctness in Module Worker scope
  */
 
 /**
@@ -441,11 +445,11 @@ async function resetBoard(request, env) {
     if (confirmation === "RESETMADDUCK") {
       await env.FLAGS.put(
         "1",
-        '{"name":"Broncos","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}'
+        '{"name":"Broncos","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
       );
       await env.FLAGS.put(
         "2",
-        '{"name":"Buccaneers","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":2500,"blue":-2500},"blue_capture":{"red":-2500,"blue":2500}}}'
+        '{"name":"Buccaneers","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":5000,"blue":-1000},"blue_capture":{"red":-1000,"blue":5000}}}'
       );
       await env.FLAGS.put(
         "3",
@@ -453,39 +457,39 @@ async function resetBoard(request, env) {
       );
       await env.FLAGS.put(
         "4",
-        '{"name":"Chiefs","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}'
+        '{"name":"Chiefs","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
       );
       await env.FLAGS.put(
         "5",
-        '{"name":"Commanders","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}'
+        '{"name":"Commanders","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
       );
       await env.FLAGS.put(
         "6",
-        '{"name":"Cowboys","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}'
+        '{"name":"Cowboys","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
       );
       await env.FLAGS.put(
         "7",
-        '{"name":"Dolphins","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}'
+        '{"name":"Dolphins","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
       );
       await env.FLAGS.put(
         "8",
-        '{"name":"Eagles","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":0,"blue":-2000},"blue_capture":{"red":0,"blue":2000}}}'
+        '{"name":"Eagles","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":1500,"blue":-2000},"blue_capture":{"red":-2000,"blue":1500}}}'
       );
       await env.FLAGS.put(
         "9",
-        '{"name":"Giants","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}'
+        '{"name":"Giants","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
       );
       await env.FLAGS.put(
         "10",
-        '{"name":"Jaguars","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}'
+        '{"name":"Jaguars","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
       );
       await env.FLAGS.put(
         "11",
-        '{"name":"Jets","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":2000,"blue":0},"blue_capture":{"red":-2000,"blue":0}}}'
+        '{"name":"Jets","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":1500,"blue":-2000},"blue_capture":{"red":-2000,"blue":1500}}}'
       );
       await env.FLAGS.put(
         "12",
-        '{"name":"Patriots","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":0,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
+        '{"name":"Patriots","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
       );
       await env.FLAGS.put(
         "13",
@@ -493,23 +497,23 @@ async function resetBoard(request, env) {
       );
       await env.FLAGS.put(
         "14",
-        '{"name":"Saints","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}'
+        '{"name":"Saints","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
       );
       await env.FLAGS.put(
         "15",
-        '{"name":"Seahawks","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}'
+        '{"name":"Seahawks","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
       );
       await env.FLAGS.put(
         "16",
-        '{"name":"Texans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}'
+        '{"name":"Texans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
       );
       await env.FLAGS.put(
         "17",
-        '{"name":"Titans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":2000,"blue":-2000},"blue_capture":{"red":-2000,"blue":2000}}}'
+        '{"name":"Titans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":2000,"blue":0},"blue_capture":{"red":0,"blue":2000}}}'
       );
       await env.FLAGS.put(
         "18",
-        '{"name":"Vikings","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}'
+        '{"name":"Vikings","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
       );
       return new Response(null, { status: 200 });
     }
