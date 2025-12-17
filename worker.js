@@ -278,7 +278,7 @@ const boardPage = (flags) => `
     document.querySelector("#blueSum").innerHTML = blueSum
   </script>
 </html>
-\`;
+`;
 
 
 /**
