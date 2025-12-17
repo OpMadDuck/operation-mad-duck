@@ -1,6 +1,9 @@
 /**
  * Summary of changes (this version):
- * Fixed timer reseting with each auto page refresh
+ * [-] Removed all geolocation prompts and geofencing checks
+ * [-] Removed location/distance from payloads and scoreboard logging
+ * [*] Kept all other functionality intact (board, reset, scoring, XSS sanitization)
+ * [*] Passed `env` into helper functions for correctness in Module Worker scope
  */
 
 /**
@@ -67,6 +70,10 @@ th, td {
   text-align:center;
 }
 .timer-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
     text-align: center;
     margin: 20px;
     padding: 20px;
@@ -78,6 +85,22 @@ th, td {
     font-weight: bold;
     margin-top: 10px;
     color: #1d1d1f;
+}
+.reveal-btn {
+    background-color: #ff9500;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 1.5em;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.reveal-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 }
 #startTimerBtn {
     background-color: #007AFF;
@@ -111,6 +134,16 @@ th, td {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+}
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    font-size: 50px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    line-height: 1;
 }
 </style>
 `;
@@ -227,12 +260,17 @@ const boardPage = (flags) => `
           </tr>
         </table>
         <div class="timer-container">
+            <button id="revealChargersBtn" class="reveal-btn">1</button>
+            <button id="revealRavensBtn" class="reveal-btn">2</button>
             <button id="startTimerBtn">Start Timer</button>
             <div id="timerDisplay">30:00</div>
         </div>
       </div>
      </div>
-    <div id="winnerAnnouncer"></div>
+    <div id="winnerAnnouncer">
+        <span class="close-btn">&times;</span>
+        <span id="winnerText"></span>
+    </div>
   </body>
   <script>
     /**
@@ -241,8 +279,6 @@ const boardPage = (flags) => `
     const flags = ${flags}
     /**
      * escapeHtml sanitizes potentially dangerous javascript input.
-     * This helps prevent accidentally or intentionally unanticipated
-     * manipulation of the flag scoring and tracking mechanics.
      */
     function escapeHtml(text) {
       return text
@@ -252,23 +288,29 @@ const boardPage = (flags) => `
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
-    /**
-     * Identify the score board table by its HTML ID
-     */
+    
     const scoreBoard = document.querySelector("#scoreBoard")
-    /**
-     * Instantiate the total point values for each team
-     */
     var redSum = 0
     var blueSum = 0
+
     flags.forEach((flag) => {
-      var row = document.createElement("tr")
-      var name = document.createElement("td")
-      var contracts = document.createElement("td")
-      var red = document.createElement("td")
-      var blue = document.createElement("td")
+      var row = document.createElement("tr");
+      row.id = 'flag-row-' + flag.name; // Assign an ID to the row
+
+      var name = document.createElement("td");
+      var contracts = document.createElement("td");
+      var red = document.createElement("td");
+      var blue = document.createElement("td");
       
-      name.innerHTML = flag.name
+      name.innerHTML = flag.name;
+
+      // Hide secret flags by default if not revealed in localStorage
+      if (flag.name === 'Chargers' && localStorage.getItem('chargersRevealed') !== 'true') {
+          row.style.display = 'none';
+      }
+      if (flag.name === 'Ravens' && localStorage.getItem('ravensRevealed') !== 'true') {
+          row.style.display = 'none';
+      }
 
       let winningContractID;
       if(flag.winner) {
@@ -292,7 +334,7 @@ const boardPage = (flags) => `
           red.innerHTML = pointsAwarded.red;
           blue.innerHTML = pointsAwarded.blue;
 
-          // Apply styles to all cells in this row to ensure they override default styles
+          // Apply styles to all cells in this row
           const cells = [name, contracts, red, blue];
           cells.forEach(cell => {
               cell.style.backgroundColor = winningTeamColor;
@@ -302,7 +344,7 @@ const boardPage = (flags) => `
         }
       }
 
-      // Style contracts (bold winner, italic others)
+      // Style contracts
       for (let i = 0; i < flag.contracts.length; i++) {
         if (i === winningContractID) {
           contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>';
@@ -322,19 +364,43 @@ const boardPage = (flags) => `
     document.querySelector("#blueSum").innerHTML = blueSum;
 
     /**
+     * Reveal Flags Logic
+     */
+    const revealChargersBtn = document.querySelector("#revealChargersBtn");
+    const revealRavensBtn = document.querySelector("#revealRavensBtn");
+
+    if (localStorage.getItem('chargersRevealed') === 'true') {
+        revealChargersBtn.disabled = true;
+    } else {
+        revealChargersBtn.addEventListener("click", () => {
+            localStorage.setItem('chargersRevealed', 'true');
+            window.location.reload();
+        });
+    }
+
+    if (localStorage.getItem('ravensRevealed') === 'true') {
+        revealRavensBtn.disabled = true;
+    } else {
+        revealRavensBtn.addEventListener("click", () => {
+            localStorage.setItem('ravensRevealed', 'true');
+            window.location.reload();
+        });
+    }
+
+    /**
      * Timer and Winner Announcement Logic
      */
     const startBtn = document.querySelector("#startTimerBtn");
     const timerDisplay = document.querySelector("#timerDisplay");
     const winnerAnnouncer = document.querySelector("#winnerAnnouncer");
+    const winnerTextElement = document.querySelector("#winnerText");
+    const closeBtn = document.querySelector(".close-btn");
     let timerInterval;
 
     const startCountdown = () => {
         const thirtyMinutes = 30 * 60 * 1000;
         const endTime = new Date().getTime() + thirtyMinutes;
         localStorage.setItem('timerEndTime', endTime);
-        
-        // Reload to sync the timer across all clients and start the countdown
         window.location.reload();
     };
     
@@ -348,7 +414,7 @@ const boardPage = (flags) => `
             winnerText = "IT'S A TIE!";
         }
         
-        winnerAnnouncer.textContent = winnerText;
+        winnerTextElement.textContent = winnerText;
         winnerAnnouncer.style.display = 'flex';
     };
 
@@ -356,7 +422,7 @@ const boardPage = (flags) => `
     const storedEndTime = localStorage.getItem('timerEndTime');
 
     if (storedEndTime) {
-        startBtn.disabled = true; // Timer is active, disable button
+        startBtn.disabled = true;
         const endTime = parseInt(storedEndTime, 10);
         
         const updateDisplay = () => {
@@ -374,11 +440,15 @@ const boardPage = (flags) => `
             }
         };
         
-        updateDisplay(); // Update immediately on load
+        updateDisplay();
         timerInterval = setInterval(updateDisplay, 1000);
     } else {
         startBtn.addEventListener("click", startCountdown);
     }
+
+    closeBtn.addEventListener("click", () => {
+        winnerAnnouncer.style.display = 'none';
+    });
   </script>
 </html>
 `;
@@ -407,14 +477,15 @@ const resetPage = `
   <script>
     /**
      * reset consumes a confirmation in the form of a String and posts it back 
-     * to the Worker to reset the KV store. If the server accepts the confirmation,
-     * the user will be redirected to the score board. If the server encounters an error, 
-     * then the user will be prompted to reattempt the reset.
-     * @param {String} confirmation
+     * to the Worker to reset the KV store.
      */
     var reset = (confirmation) => {
       if (confirmation === 'RESETMADDUCK') {
-        localStorage.removeItem('timerEndTime'); // Clear the timer from storage
+        // Clear all relevant states from localStorage
+        localStorage.removeItem('timerEndTime');
+        localStorage.removeItem('chargersRevealed');
+        localStorage.removeItem('ravensRevealed');
+
         fetch("/reset", { method: "POST", body: confirmation })
         .then((response) => {
           if (!response.ok) {
@@ -430,7 +501,6 @@ const resetPage = `
     /**
      * requestConfirmation prompts the user to submit their proper confirmation 
      * message to reset the game.
-     * @param {Event} _event
      */
     var requestConfirmation = (_event) => {
       let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
