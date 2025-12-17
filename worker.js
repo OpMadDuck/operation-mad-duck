@@ -218,45 +218,59 @@ const boardPage = (flags) => `
       var contracts = document.createElement("td")
       var red = document.createElement("td")
       var blue = document.createElement("td")
-      // Set the name of the flag
+      
       name.innerHTML = flag.name
-      // Determine winner and sum scores
+
       let winningContractID;
       if(flag.winner) {
         let winnerArray = flag.winner.split(',');
         winningContractID = parseInt(winnerArray[1]);
         let pointsAwarded;
-        // Check which team won to determine which set of points to use
+        let winningTeamColor;
+
         if (winnerArray[0] === 'red') {
           pointsAwarded = flag.points.red_capture;
+          winningTeamColor = 'red';
         } else if (winnerArray[0] === 'blue') {
           pointsAwarded = flag.points.blue_capture;
+          winningTeamColor = 'blue';
         }
+
         if (pointsAwarded) {
-          // Add the points (positive or negative) to the team totals
           redSum += pointsAwarded.red;
           blueSum += pointsAwarded.blue;
-          // Display the points awarded for this flag, colored for clarity
-          red.innerHTML = '<span style="color: ' + (pointsAwarded.red >= 0 ? 'green' : 'red') + ';">' + pointsAwarded.red + '</span>';
-          blue.innerHTML = '<span style="color: ' + (pointsAwarded.blue >= 0 ? 'green' : 'red') + ';">' + pointsAwarded.blue + '</span>';
+          
+          red.innerHTML = pointsAwarded.red;
+          blue.innerHTML = pointsAwarded.blue;
+
+          // Apply styles to all cells in this row to ensure they override default styles
+          const cells = [name, contracts, red, blue];
+          cells.forEach(cell => {
+              cell.style.backgroundColor = winningTeamColor;
+              cell.style.color = 'white';
+              cell.style.fontWeight = 'bold';
+          });
         }
       }
+
       // Style contracts (bold winner, italic others)
       for (let i = 0; i < flag.contracts.length; i++) {
         if (i === winningContractID) {
-          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>'
+          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>';
         } else {
-          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>'
+          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>';
         }
       }
-      row.appendChild(name)
-      row.appendChild(contracts)
-      row.appendChild(red)
-      row.appendChild(blue)
-      scoreBoard.appendChild(row)
-    })
-    document.querySelector("#redSum").innerHTML = redSum
-    document.querySelector("#blueSum").innerHTML = blueSum
+
+      row.appendChild(name);
+      row.appendChild(contracts);
+      row.appendChild(red);
+      row.appendChild(blue);
+      scoreBoard.appendChild(row);
+    });
+
+    document.querySelector("#redSum").innerHTML = redSum;
+    document.querySelector("#blueSum").innerHTML = blueSum;
   </script>
 </html>
 `;
