@@ -1,9 +1,6 @@
 /**
  * Summary of changes (this version):
- * [-] Removed all geolocation prompts and geofencing checks
- * [-] Removed location/distance from payloads and scoreboard logging
- * [*] Kept all other functionality intact (board, reset, scoring, XSS sanitization)
- * [*] Passed `env` into helper functions for correctness in Module Worker scope
+ * added a auto refresh every 15 seconds
  */
 
 /**
@@ -158,6 +155,7 @@ const boardPage = (flags) => `
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="refresh" content="15">
     <title>Operation Mad Duck | Score Board</title>
     ${style}
   </head>
