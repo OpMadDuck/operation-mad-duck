@@ -167,10 +167,6 @@ const flagPage = (flag) => `
  * flags, and the total scores for each team.
  * @param {Array<Object>} flags
  */
-
-/**
-*code below altered by genai.mil to have addition and subtraction aspects of capturing a flag
-*/
 const boardPage = (flags) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -178,7 +174,7 @@ const boardPage = (flags) => `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Operation Mad Duck | Score Board</title>
-    \${style}
+    ${style}
   </head>
   <body>
     <div class="container">
@@ -208,7 +204,8 @@ const boardPage = (flags) => `
     /**
      * Instantiate the array of flags passed in from the worker.
      */
-    const flags = \${flags}
+    const flags = ${flags}
+
     /**
      * escapeHtml sanitizes potentially dangerous javascript input.
      * This helps prevent accidentally or intentionally unanticipated
@@ -222,44 +219,42 @@ const boardPage = (flags) => `
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
+
     /**
      * Identify the score board table by its HTML ID
      */
     const scoreBoard = document.querySelector("#scoreBoard")
+
     /**
      * Instantiate the total point values for each team
      */
     var redSum = 0
     var blueSum = 0
+
     flags.forEach((flag) => {
       var row = document.createElement("tr")
       var name = document.createElement("td")
       var contracts = document.createElement("td")
       var red = document.createElement("td")
       var blue = document.createElement("td")
+
       // Set the name of the flag
       name.innerHTML = flag.name
+
       // Determine winner and sum scores
       let winningContractID;
       if(flag.winner) {
         let winnerArray = flag.winner.split(',')
         winningContractID = parseInt(winnerArray[1])
         if (winnerArray[0] === 'red') {
-          // Add points to Red team
           redSum += flag.red
           red.innerHTML = flag.red
-          // Subtract points from Blue team
-          blueSum -= flag.blue
-          blue.innerHTML = \`<span style="color: red;">-\${flag.blue}</span>\`
         } else if (winnerArray[0] === 'blue') {
-          // Add points to Blue team
           blueSum += flag.blue
           blue.innerHTML = flag.blue
-          // Subtract points from Red team
-          redSum -= flag.red
-          red.innerHTML = \`<span style="color: red;">-\${flag.red}</span>\`
         }
       }
+
       // Style contracts (bold winner, italic others)
       for (let i = 0; i < flag.contracts.length; i++) {
         if (i === winningContractID) {
@@ -268,18 +263,19 @@ const boardPage = (flags) => `
           contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>'
         }
       }
+
       row.appendChild(name)
       row.appendChild(contracts)
       row.appendChild(red)
       row.appendChild(blue)
       scoreBoard.appendChild(row)
     })
+
     document.querySelector("#redSum").innerHTML = redSum
     document.querySelector("#blueSum").innerHTML = blueSum
   </script>
 </html>
 `;
-
 
 /**
  * resetPage returns a response body as a string. The response body contains
@@ -605,4 +601,4 @@ export default {
   async fetch(request, env, ctx) {
     return handleRequest(request, env, ctx);
   }
-  }
+}
