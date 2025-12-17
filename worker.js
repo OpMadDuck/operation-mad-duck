@@ -246,13 +246,22 @@ const boardPage = (flags) => `
       if(flag.winner) {
         let winnerArray = flag.winner.split(',')
         winningContractID = parseInt(winnerArray[1])
-        if (winnerArray[0] === 'red') {
+       if (winnerArray[0] === 'red') {
+          // Add points to Red team
           redSum += flag.red
           red.innerHTML = flag.red
+          // Subtract points from Blue team
+          blueSum -= flag.blue
+          blue.innerHTML = \`<span style="color: red;">-\${flag.blue}</span>\`
         } else if (winnerArray[0] === 'blue') {
+          // Add points to Blue team
           blueSum += flag.blue
           blue.innerHTML = flag.blue
+          // Subtract points from Red team
+          redSum -= flag.red
+          red.innerHTML = \`<span style="color: red;">-\${flag.red}</span>\`
         }
+       }
       }
 
       // Style contracts (bold winner, italic others)
@@ -475,7 +484,7 @@ async function resetBoard(request, env) {
       );
       await env.FLAGS.put(
         "2",
-        '{"name":"Buccaneers", "times":[], "contracts":[], "red":5000, "blue":5000, "winner":null}'
+        '{"name":"Buccaneers", "times":[], "contracts":[], "red":2500, "blue":2500, "winner":null}'
       );
       await env.FLAGS.put(
         "3",
