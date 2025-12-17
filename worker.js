@@ -1,6 +1,9 @@
 /**
  * Summary of changes (this version):
- * added a auto refresh every 15 seconds
+ * [-] Removed all geolocation prompts and geofencing checks
+ * [-] Removed location/distance from payloads and scoreboard logging
+ * [*] Kept all other functionality intact (board, reset, scoring, XSS sanitization)
+ * [*] Passed `env` into helper functions for correctness in Module Worker scope
  */
 
 /**
@@ -65,6 +68,52 @@ th, td {
   max-width: 95%;
   min-width: 85%;
   text-align:center;
+}
+.timer-container {
+    text-align: center;
+    margin: 20px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 18px;
+}
+#timerDisplay {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-top: 10px;
+    color: #1d1d1f;
+}
+#startTimerBtn {
+    background-color: #007AFF;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+}
+#startTimerBtn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+#winnerAnnouncer {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    font-size: 5vw;
+    font-weight: bold;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 </style>
 `;
@@ -180,8 +229,13 @@ const boardPage = (flags) => `
             <th id='blueSum'></th>
           </tr>
         </table>
+        <div class="timer-container">
+            <button id="startTimerBtn">Start Timer</button>
+            <div id="timerDisplay">30:00</div>
+        </div>
       </div>
      </div>
+    <div id="winnerAnnouncer"></div>
   </body>
   <script>
     /**
@@ -269,6 +323,53 @@ const boardPage = (flags) => `
 
     document.querySelector("#redSum").innerHTML = redSum;
     document.querySelector("#blueSum").innerHTML = blueSum;
+
+    /**
+     * Timer and Winner Announcement Logic
+     */
+    const startBtn = document.querySelector("#startTimerBtn");
+    const timerDisplay = document.querySelector("#timerDisplay");
+    const winnerAnnouncer = document.querySelector("#winnerAnnouncer");
+    let timerInterval;
+
+    const startCountdown = () => {
+        // Disable the button to prevent restarting
+        startBtn.disabled = true;
+
+        let duration = 30 * 60;
+
+        timerInterval = setInterval(() => {
+            const minutes = Math.floor(duration / 60);
+            const seconds = duration % 60;
+
+            timerDisplay.textContent = 
+                String(minutes).padStart(2, '0') + ":" + 
+                String(seconds).padStart(2, '0');
+            
+            duration--;
+
+            if (duration < 0) {
+                clearInterval(timerInterval);
+                announceWinner();
+            }
+        }, 1000);
+    };
+
+    const announceWinner = () => {
+        let winnerText = "THE WINNER IS ";
+        if (redSum > blueSum) {
+            winnerText += "RED TEAM";
+        } else if (blueSum > redSum) {
+            winnerText += "BLUE TEAM";
+        } else {
+            winnerText = "IT'S A TIE!";
+        }
+        
+        winnerAnnouncer.textContent = winnerText;
+        winnerAnnouncer.style.display = 'flex';
+    };
+
+    startBtn.addEventListener("click", startCountdown);
   </script>
 </html>
 `;
