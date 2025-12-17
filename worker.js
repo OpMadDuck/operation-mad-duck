@@ -475,7 +475,7 @@ async function resetBoard(request, env) {
     if (confirmation === "RESETMADDUCK") {
       await env.FLAGS.put(
         "1",
-        '{"name":"Broncos", "times":[], "contracts":[], "red":-100, "blue":500, "winner":null}'
+        '{"name":"Broncos", "times":[], "contracts":[], "red":100, "blue":500, "winner":null}'
       );
       await env.FLAGS.put(
         "2",
@@ -483,11 +483,11 @@ async function resetBoard(request, env) {
       );
       await env.FLAGS.put(
         "3",
-        '{"name":"Chargers", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Chargers", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       await env.FLAGS.put(
         "4",
-        '{"name":"Chiefs", "times":[], "contracts":[], "red":500, "blue":-100, "winner":null}'
+        '{"name":"Chiefs", "times":[], "contracts":[], "red":500, "blue":100, "winner":null}'
       );
       await env.FLAGS.put(
         "5",
@@ -605,4 +605,4 @@ export default {
   async fetch(request, env, ctx) {
     return handleRequest(request, env, ctx);
   }
-}
+  }
