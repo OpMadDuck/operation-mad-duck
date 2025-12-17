@@ -20,7 +20,6 @@ body {
   height: 100%;
   margin: 0;
 }
-
 h1 {
   background-color: white;
   border-radius: 18px;
@@ -28,7 +27,6 @@ h1 {
   padding: 18px;
   text-align: center;
 }
-
 h2 {
   background-color: green;
   border-radius: 18px;
@@ -37,7 +35,6 @@ h2 {
   text-align: center;
   cursor: pointer;
 }
-
 table {
   background-color: white;
   border-collapse: collapse;
@@ -48,7 +45,6 @@ table {
   padding: 18px;
   text-align: left;
 }
-
 th, td {
   background-color: white;
   border: 2px solid #F5F5F7;
@@ -57,7 +53,6 @@ th, td {
   padding: 7px;
   text-overflow: ellipsis;
 }
-
 .container {
   align-items: center;
   display: flex;
@@ -65,7 +60,6 @@ th, td {
   height: 100%;
   justify-content: center;
 }
-
 .subcontainer {
   align-items: center;
   display: flex;
@@ -100,20 +94,15 @@ const flagPage = (flag) => `
         <h2>Capture!</h2>
       </div>
     </div>
-
     <script>
       // Save the query strings in the URL
       const queryString = window.location.search;
-
       // Parse the saved search parameters  
       const urlParams = new URLSearchParams(queryString);
-
       // Get the value of the ID (must be a value between 1-18)
       const id = urlParams.get("id");
-
       // Prevent the user from seeing the ID in the URL bar
       window.history.replaceState(null, "", "/");
-
       /**
        * captureFlag consumes a contract in the form of a String and posts it back 
        * to the Worker for logging. If the server accepts the contract, the user 
@@ -124,9 +113,7 @@ const flagPage = (flag) => `
        */
       const captureFlag = (contract) => {
         if (!contract) return;
-
         const payload = { contract }; // no location data
-
         fetch("/capture?id=" + id, {
           method: "POST",
           body: JSON.stringify(payload),
@@ -142,7 +129,6 @@ const flagPage = (flag) => `
           alert("Unexpected error submitting contract: " + err.message);
         });
       };
-
       /**
        * requestContract prompts the user to submit their team's contract to 
        * capture the flag, and then passes the result to the captureFlag function.
@@ -151,7 +137,6 @@ const flagPage = (flag) => `
         const contract = prompt("Please enter your team's contract:");
         captureFlag(contract);
       };
-
       /**
        * Wait for the user to tap/click the 'Capture!' button on the page.
        */
@@ -246,14 +231,14 @@ const boardPage = (flags) => `
           red.innerHTML = flag.red
           // Subtract points from Blue team
           blueSum -= flag.blue
-          blue.innerHTML = \`<span style="color: red;">-${flag.blue}</span>\`
+          blue.innerHTML = \`<span style="color: red;">-\${flag.blue}</span>\`
         } else if (winnerArray[0] === 'blue') {
           // Add points to Blue team
           blueSum += flag.blue
           blue.innerHTML = flag.blue
           // Subtract points from Red team
           redSum -= flag.red
-          red.innerHTML = \`<span style="color: red;">-${flag.red}</span>\`
+          red.innerHTML = \`<span style="color: red;">-\${flag.red}</span>\`
         }
       }
       // Style contracts (bold winner, italic others)
@@ -301,8 +286,7 @@ const resetPage = `
     /**
      * reset consumes a confirmation in the form of a String and posts it back 
      * to the Worker to reset the KV store. If the server accepts the confirmation,
-     * the user will be redirected to the score board. If the server encounters an error, 
-     * then the user will be prompted to reattempt the reset.
+     * the user will be redirected to the score board. If the server encounters an error, g     * then the user will be prompted to reattempt the reset.
      * @param {String} confirmation
      */
     var reset = (confirmation) => {
@@ -319,7 +303,6 @@ const resetPage = `
         alert("Please enter RESETMADDUCK in all caps.")
       }
     }
-
     /**
      * requestConfirmation prompts the user to submit their proper confirmation 
      * message to reset the game.
@@ -329,7 +312,6 @@ const resetPage = `
       let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
       reset(confirmation)
     }
-
     /**
      * Wait for the user to tap/click the 'Reset!' button on the page.
      */
@@ -354,7 +336,6 @@ async function getFlag(request, env) {
       status: 404,
     });
   }
-
   const body = flagPage(flag);
   return new Response(body, {
     headers: { "Content-Type": "text/html" },
@@ -373,23 +354,18 @@ async function captureFlag(request, env) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-
     const json = await request.json();
     const contract = json?.contract;
-
     if (!id || !contract) {
       return new Response("Missing flag ID or contract.", { status: 400 });
     }
-
     // Load flag data from KV
     const flag = await env.FLAGS.get(id, { type: "json" });
     if (!flag) {
       return new Response("Flag not found in KV store.", { status: 404 });
     }
-
     // Determine winner if not already set
     let winner = flag.winner ? flag.winner : await check(contract, id, env);
-
     // Update KV store with new contract (no location appended)
     await env.FLAGS.put(
       id,
@@ -402,7 +378,6 @@ async function captureFlag(request, env) {
         winner: winner,
       })
     );
-
     return new Response(null, { status: 200 });
   } catch (err) {
     return new Response("Error: " + err.toString(), { status: 500 });
@@ -574,7 +549,6 @@ async function confirmContract() {
 async function handleRequest(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname;
-
   switch (path) {
     case "/flag":
       return getFlag(request, env);
