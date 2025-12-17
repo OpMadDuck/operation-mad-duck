@@ -1,9 +1,14 @@
 /**
  * Summary of changes (this version):
- * [-] Removed all geolocation prompts and geofencing checks
- * [-] Removed location/distance from payloads and scoreboard logging
- * [*] Kept all other functionality intact (board, reset, scoring, XSS sanitization)
- * [*] Passed `env` into helper functions for correctness in Module Worker scope
+ * JavaScript-based Auto-Refresh: I will remove the <meta> tag for refreshing the page. Instead, I will use JavaScript to handle the 15-second refresh. This is necessary so that we can have a button to turn this feature on and off.
+* New Control Buttons: I will add a new row of buttons to the scoreboard page for administrative controls:
+* "Stop Timer" Button: This button will stop the 30-minute countdown and remove it from memory, allowing it to be started again.
+* "Toggle Auto-Refresh" Button: This button will turn the 15-second auto-refresh on or off. Its state will be saved so it persists between reloads. It will be "On" by default.
+* "Reset 1" Button: This button will re-hide the "Chargers" flag and re-enable the reveal button "1".
+* "Reset 2" Button: This button will re-hide the "Ravens" flag and re-enable the reveal button "2".
+* Persistent State: All of these new states (auto-refresh on/off, timer stopped, flags re-hidden) will use the browser's localStorage to ensure they work correctly across page reloads.
+*Game Reset Update: The main "RESETMADDUCK" function will be updated to also clear these new states from localStorage, ensuring a completely clean start for the next game.
+ 
  */
 
 /**
@@ -69,16 +74,20 @@ th, td {
   min-width: 85%;
   text-align:center;
 }
-.timer-container {
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 18px;
+}
+.button-row {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 20px;
-    text-align: center;
-    margin: 20px;
-    padding: 20px;
-    background-color: white;
-    border-radius: 18px;
 }
 #timerDisplay {
     font-size: 2.5em;
@@ -86,39 +95,42 @@ th, td {
     margin-top: 10px;
     color: #1d1d1f;
 }
-.reveal-btn {
-    background-color: #ff9500;
-    color: white;
+.reveal-btn, .control-btn {
     border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    color: white;
+}
+.reveal-btn {
+    background-color: #ff9500; /* Orange */
     border-radius: 50%;
     width: 60px;
     height: 60px;
     font-size: 1.5em;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
-.reveal-btn:disabled {
+.reveal-btn:disabled, .control-btn:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
 }
 #startTimerBtn {
-    background-color: #007AFF;
-    color: white;
-    border: none;
+    background-color: #007AFF; /* Blue */
     border-radius: 50%;
     width: 100px;
     height: 100px;
     font-size: 1em;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    transition: background-color 0.3s;
 }
 #startTimerBtn:disabled {
     background-color: #cccccc;
-    cursor: not-allowed;
 }
+.stop-btn { background-color: #ff3b30; } /* Red */
+.refresh-btn-on { background-color: #34c759; } /* Green */
+.refresh-btn-off { background-color: #ff3b30; } /* Red */
+.reset-flag-btn { background-color: #5856d6; } /* Indigo */
+
 #winnerAnnouncer {
     display: none;
     position: fixed;
@@ -150,9 +162,6 @@ th, td {
 
 /**
  * flagPage consumes a flag object and returns a response body as a string.
- * The response body represents a flag waypoint - the content shown to a
- * user when they scan the appropriate QR code.
- * @param {Object} flag
  */
 const flagPage = (flag) => `
 <!DOCTYPE html>
@@ -171,25 +180,13 @@ const flagPage = (flag) => `
       </div>
     </div>
     <script>
-      // Save the query strings in the URL
       const queryString = window.location.search;
-      // Parse the saved search parameters  
       const urlParams = new URLSearchParams(queryString);
-      // Get the value of the ID (must be a value between 1-18)
       const id = urlParams.get("id");
-      // Prevent the user from seeing the ID in the URL bar
       window.history.replaceState(null, "", "/");
-      /**
-       * captureFlag consumes a contract in the form of a String and posts it back 
-       * to the Worker for logging. If the server accepts the contract, the user 
-       * will be redirected to prevent them from accessing the page again directly. 
-       * If the server encounters an error, then the user will be prompted to resubmit 
-       * their contract.
-       * @param {String} contract
-       */
       const captureFlag = (contract) => {
         if (!contract) return;
-        const payload = { contract }; // no location data
+        const payload = { contract };
         fetch("/capture?id=" + id, {
           method: "POST",
           body: JSON.stringify(payload),
@@ -205,17 +202,10 @@ const flagPage = (flag) => `
           alert("Unexpected error submitting contract: " + err.message);
         });
       };
-      /**
-       * requestContract prompts the user to submit their team's contract to 
-       * capture the flag, and then passes the result to the captureFlag function.
-       */
       const requestContract = () => {
         const contract = prompt("Please enter your team's contract:");
         captureFlag(contract);
       };
-      /**
-       * Wait for the user to tap/click the 'Capture!' button on the page.
-       */
       document.querySelector("h2").addEventListener("click", requestContract);
     </script>
   </body>
@@ -224,9 +214,7 @@ const flagPage = (flag) => `
 
 /**
  * boardPage consumes an array of all flag objects and returns a response
- * body as a string. The response body represents a score board for all
- * flags, and the total scores for each team.
- * @param {Array<Object>} flags
+ * body as a string.
  */
 const boardPage = (flags) => `
 <!DOCTYPE html>
@@ -234,7 +222,6 @@ const boardPage = (flags) => `
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta http-equiv="refresh" content="15">
     <title>Operation Mad Duck | Score Board</title>
     ${style}
   </head>
@@ -259,11 +246,19 @@ const boardPage = (flags) => `
             <th id='blueSum'></th>
           </tr>
         </table>
-        <div class="timer-container">
-            <button id="revealChargersBtn" class="reveal-btn">1</button>
-            <button id="revealRavensBtn" class="reveal-btn">2</button>
-            <button id="startTimerBtn">Start Timer</button>
-            <div id="timerDisplay">30:00</div>
+        <div class="controls-container">
+            <div class="button-row">
+                <button id="revealChargersBtn" class="reveal-btn">1</button>
+                <button id="revealRavensBtn" class="reveal-btn">2</button>
+                <button id="startTimerBtn">Start Timer</button>
+                <div id="timerDisplay">30:00</div>
+            </div>
+            <div class="button-row">
+                <button id="stopTimerBtn" class="control-btn stop-btn">Stop Timer</button>
+                <button id="toggleRefreshBtn" class="control-btn"></button>
+                <button id="resetChargersBtn" class="control-btn reset-flag-btn">Reset 1</button>
+                <button id="resetRavensBtn" class="control-btn reset-flag-btn">Reset 2</button>
+            </div>
         </div>
       </div>
      </div>
@@ -273,13 +268,8 @@ const boardPage = (flags) => `
     </div>
   </body>
   <script>
-    /**
-     * Instantiate the array of flags passed in from the worker.
-     */
     const flags = ${flags}
-    /**
-     * escapeHtml sanitizes potentially dangerous javascript input.
-     */
+    
     function escapeHtml(text) {
       return text
         .replace(/&/g, "&amp;")
@@ -295,7 +285,7 @@ const boardPage = (flags) => `
 
     flags.forEach((flag) => {
       var row = document.createElement("tr");
-      row.id = 'flag-row-' + flag.name; // Assign an ID to the row
+      row.id = 'flag-row-' + flag.name; 
 
       var name = document.createElement("td");
       var contracts = document.createElement("td");
@@ -304,7 +294,6 @@ const boardPage = (flags) => `
       
       name.innerHTML = flag.name;
 
-      // Hide secret flags by default if not revealed in localStorage
       if (flag.name === 'Chargers' && localStorage.getItem('chargersRevealed') !== 'true') {
           row.style.display = 'none';
       }
@@ -330,11 +319,9 @@ const boardPage = (flags) => `
         if (pointsAwarded) {
           redSum += pointsAwarded.red;
           blueSum += pointsAwarded.blue;
-          
           red.innerHTML = pointsAwarded.red;
           blue.innerHTML = pointsAwarded.blue;
-
-          // Apply styles to all cells in this row
+          
           const cells = [name, contracts, red, blue];
           cells.forEach(cell => {
               cell.style.backgroundColor = winningTeamColor;
@@ -344,7 +331,6 @@ const boardPage = (flags) => `
         }
       }
 
-      // Style contracts
       for (let i = 0; i < flag.contracts.length; i++) {
         if (i === winningContractID) {
           contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>';
@@ -364,39 +350,47 @@ const boardPage = (flags) => `
     document.querySelector("#blueSum").innerHTML = blueSum;
 
     /**
-     * Reveal Flags Logic
+     * Admin Controls Logic
      */
     const revealChargersBtn = document.querySelector("#revealChargersBtn");
     const revealRavensBtn = document.querySelector("#revealRavensBtn");
-
-    if (localStorage.getItem('chargersRevealed') === 'true') {
-        revealChargersBtn.disabled = true;
-    } else {
-        revealChargersBtn.addEventListener("click", () => {
-            localStorage.setItem('chargersRevealed', 'true');
-            window.location.reload();
-        });
-    }
-
-    if (localStorage.getItem('ravensRevealed') === 'true') {
-        revealRavensBtn.disabled = true;
-    } else {
-        revealRavensBtn.addEventListener("click", () => {
-            localStorage.setItem('ravensRevealed', 'true');
-            window.location.reload();
-        });
-    }
-
-    /**
-     * Timer and Winner Announcement Logic
-     */
+    const resetChargersBtn = document.querySelector("#resetChargersBtn");
+    const resetRavensBtn = document.querySelector("#resetRavensBtn");
     const startBtn = document.querySelector("#startTimerBtn");
+    const stopTimerBtn = document.querySelector("#stopTimerBtn");
     const timerDisplay = document.querySelector("#timerDisplay");
     const winnerAnnouncer = document.querySelector("#winnerAnnouncer");
     const winnerTextElement = document.querySelector("#winnerText");
     const closeBtn = document.querySelector(".close-btn");
+    const toggleRefreshBtn = document.querySelector("#toggleRefreshBtn");
     let timerInterval;
 
+    // Reveal Flags
+    if (localStorage.getItem('chargersRevealed') === 'true') revealChargersBtn.disabled = true;
+    else revealChargersBtn.addEventListener("click", () => { localStorage.setItem('chargersRevealed', 'true'); window.location.reload(); });
+    
+    if (localStorage.getItem('ravensRevealed') === 'true') revealRavensBtn.disabled = true;
+    else revealRavensBtn.addEventListener("click", () => { localStorage.setItem('ravensRevealed', 'true'); window.location.reload(); });
+
+    resetChargersBtn.addEventListener('click', () => { localStorage.removeItem('chargersRevealed'); window.location.reload(); });
+    resetRavensBtn.addEventListener('click', () => { localStorage.removeItem('ravensRevealed'); window.location.reload(); });
+
+    // Auto-Refresh
+    const autoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false'; // Default to true
+    if (autoRefreshEnabled) {
+        setTimeout(() => window.location.reload(), 15000);
+        toggleRefreshBtn.textContent = 'Auto-Refresh: On';
+        toggleRefreshBtn.className = 'control-btn refresh-btn-on';
+    } else {
+        toggleRefreshBtn.textContent = 'Auto-Refresh: Off';
+        toggleRefreshBtn.className = 'control-btn refresh-btn-off';
+    }
+    toggleRefreshBtn.addEventListener('click', () => {
+      localStorage.setItem('autoRefresh', !autoRefreshEnabled);
+      window.location.reload();
+    });
+
+    // Timer
     const startCountdown = () => {
         const thirtyMinutes = 30 * 60 * 1000;
         const endTime = new Date().getTime() + thirtyMinutes;
@@ -406,21 +400,15 @@ const boardPage = (flags) => `
     
     const announceWinner = () => {
         let winnerText = "THE WINNER IS ";
-        if (redSum > blueSum) {
-            winnerText += "RED TEAM";
-        } else if (blueSum > redSum) {
-            winnerText += "BLUE TEAM";
-        } else {
-            winnerText = "IT'S A TIE!";
-        }
+        if (redSum > blueSum) winnerText += "RED TEAM";
+        else if (blueSum > redSum) winnerText += "BLUE TEAM";
+        else winnerText = "IT'S A TIE!";
         
         winnerTextElement.textContent = winnerText;
         winnerAnnouncer.style.display = 'flex';
     };
 
-    // On page load, check if a timer is running
     const storedEndTime = localStorage.getItem('timerEndTime');
-
     if (storedEndTime) {
         startBtn.disabled = true;
         const endTime = parseInt(storedEndTime, 10);
@@ -428,7 +416,6 @@ const boardPage = (flags) => `
         const updateDisplay = () => {
             const now = new Date().getTime();
             const remaining = endTime - now;
-
             if (remaining <= 0) {
                 clearInterval(timerInterval);
                 timerDisplay.textContent = '00:00';
@@ -439,12 +426,16 @@ const boardPage = (flags) => `
                 timerDisplay.textContent = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
             }
         };
-        
         updateDisplay();
         timerInterval = setInterval(updateDisplay, 1000);
     } else {
         startBtn.addEventListener("click", startCountdown);
     }
+
+    stopTimerBtn.addEventListener('click', () => {
+        localStorage.removeItem('timerEndTime');
+        window.location.reload();
+    });
 
     closeBtn.addEventListener("click", () => {
         winnerAnnouncer.style.display = 'none';
@@ -454,9 +445,7 @@ const boardPage = (flags) => `
 `;
 
 /**
- * resetPage returns a response body as a string. The response body contains
- * a button which will revert the Worker KV database back to its original
- * state. There is no way to restore the data once the reset occurs.
+ * resetPage returns a response body as a string.
  */
 const resetPage = `
 <!DOCTYPE html>
@@ -475,16 +464,13 @@ const resetPage = `
      </div>
   </body>
   <script>
-    /**
-     * reset consumes a confirmation in the form of a String and posts it back 
-     * to the Worker to reset the KV store.
-     */
     var reset = (confirmation) => {
       if (confirmation === 'RESETMADDUCK') {
         // Clear all relevant states from localStorage
         localStorage.removeItem('timerEndTime');
         localStorage.removeItem('chargersRevealed');
         localStorage.removeItem('ravensRevealed');
+        localStorage.removeItem('autoRefresh');
 
         fetch("/reset", { method: "POST", body: confirmation })
         .then((response) => {
@@ -498,28 +484,17 @@ const resetPage = `
         alert("Please enter RESETMADDUCK in all caps.")
       }
     }
-    /**
-     * requestConfirmation prompts the user to submit their proper confirmation 
-     * message to reset the game.
-     */
     var requestConfirmation = (_event) => {
       let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
       reset(confirmation)
     }
-    /**
-     * Wait for the user to tap/click the 'Reset!' button on the page.
-     */
     document.querySelector("h2").addEventListener("click", requestConfirmation)
   </script>
 </html>
 `;
 
 /**
- * getFlag consumes a request forwarded by the handleRequest() function
- * and supplies a dynamic Response containing a flagPage.
- * @param {Request} request
- * @param {any} env
- * @returns {Response}
+ * getFlag consumes a request forwarded by the handleRequest() function.
  */
 async function getFlag(request, env) {
   const { searchParams } = new URL(request.url);
@@ -537,12 +512,7 @@ async function getFlag(request, env) {
 }
 
 /**
- * captureFlag consumes a request forwarded by the handleRequest() function
- * and runs a check on the submitted contract prior to logging it's contents.
- * After passing all required checks, data is updated in the KV store.
- * @param {Request} request
- * @param {any} env
- * @returns {Response}
+ * captureFlag consumes a request forwarded by the handleRequest() function.
  */
 async function captureFlag(request, env) {
   try {
@@ -553,21 +523,18 @@ async function captureFlag(request, env) {
     if (!id || !contract) {
       return new Response("Missing flag ID or contract.", { status: 400 });
     }
-    // Load flag data from KV
     const flag = await env.FLAGS.get(id, { type: "json" });
     if (!flag) {
       return new Response("Flag not found in KV store.", { status: 404 });
     }
-    // Determine winner if not already set
     let winner = flag.winner ? flag.winner : await check(contract, id, env);
-    // Update KV store with new contract (no location appended)
     await env.FLAGS.put(
       id,
       JSON.stringify({
         name: flag.name,
         times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
         contracts: flag.contracts.concat(contract),
-        points: flag.points, // Pass the points object through
+        points: flag.points,
         winner: winner,
       })
     );
@@ -579,12 +546,7 @@ async function captureFlag(request, env) {
 
 /**
  * check consumes a contract statement and flag ID from the captureFlag()
- * function. If the supplied contract is correct, then a result is returned
- * bearing the winning team and an index of the winning contract
- * @param {String} contract
- * @param {String} id
- * @param {any} env
- * @returns {String|null} winningTeam,winningContract
+ * function.
  */
 async function check(contract, id, env) {
   const flag = await env.FLAGS.get(id, { type: "json" });
@@ -606,11 +568,7 @@ async function check(contract, id, env) {
 }
 
 /**
- * getBoard consumes a request forwarded by the handleRequest() function
- * and returns a response with boardPage in the body. All data must be
- * retrieved from the KV store prior to issuing a Response.
- * @param {any} env
- * @returns {Response}
+ * getBoard consumes a request forwarded by the handleRequest() function.
  */
 async function getBoard(env) {
   const promises = [];
@@ -625,89 +583,30 @@ async function getBoard(env) {
 }
 
 /**
- * resetBoard consumes a request forwarded by the handleRequest() function
- * and runs a check on the submitted confirmation message prior to resetting
- * the game state. After passing all required checks, data is reset in the KV store.
- * @param {Request} request
- * @param {any} env
- * @returns {Response}
+ * resetBoard consumes a request forwarded by the handleRequest() function.
  */
 async function resetBoard(request, env) {
   if (request.method === "POST") {
     const confirmation = await request.text();
     if (confirmation === "RESETMADDUCK") {
-      await env.FLAGS.put(
-        "1",
-        '{"name":"Broncos","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
-      );
-      await env.FLAGS.put(
-        "2",
-        '{"name":"Buccaneers","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":5000,"blue":-1000},"blue_capture":{"red":-1000,"blue":5000}}}'
-      );
-      await env.FLAGS.put(
-        "3",
-        '{"name":"Chargers","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}'
-      );
-      await env.FLAGS.put(
-        "4",
-        '{"name":"Chiefs","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
-      );
-      await env.FLAGS.put(
-        "5",
-        '{"name":"Commanders","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
-      );
-      await env.FLAGS.put(
-        "6",
-        '{"name":"Cowboys","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
-      );
-      await env.FLAGS.put(
-        "7",
-        '{"name":"Dolphins","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
-      );
-      await env.FLAGS.put(
-        "8",
-        '{"name":"Eagles","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":1500,"blue":-2000},"blue_capture":{"red":-2000,"blue":1500}}}'
-      );
-      await env.FLAGS.put(
-        "9",
-        '{"name":"Giants","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
-      );
-      await env.FLAGS.put(
-        "10",
-        '{"name":"Jaguars","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
-      );
-      await env.FLAGS.put(
-        "11",
-        '{"name":"Jets","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":1500,"blue":-2000},"blue_capture":{"red":-2000,"blue":1500}}}'
-      );
-      await env.FLAGS.put(
-        "12",
-        '{"name":"Patriots","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
-      );
-      await env.FLAGS.put(
-        "13",
-        '{"name":"Ravens","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}'
-      );
-      await env.FLAGS.put(
-        "14",
-        '{"name":"Saints","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}'
-      );
-      await env.FLAGS.put(
-        "15",
-        '{"name":"Seahawks","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
-      );
-      await env.FLAGS.put(
-        "16",
-        '{"name":"Texans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
-      );
-      await env.FLAGS.put(
-        "17",
-        '{"name":"Titans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":2000,"blue":0},"blue_capture":{"red":0,"blue":2000}}}'
-      );
-      await env.FLAGS.put(
-        "18",
-        '{"name":"Vikings","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}'
-      );
+      await env.FLAGS.put("1",'{"name":"Broncos","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+      await env.FLAGS.put("2",'{"name":"Buccaneers","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":5000,"blue":-1000},"blue_capture":{"red":-1000,"blue":5000}}}');
+      await env.FLAGS.put("3",'{"name":"Chargers","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}');
+      await env.FLAGS.put("4",'{"name":"Chiefs","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+      await env.FLAGS.put("5",'{"name":"Commanders","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+      await env.FLAGS.put("6",'{"name":"Cowboys","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+      await env.FLAGS.put("7",'{"name":"Dolphins","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+      await env.FLAGS.put("8",'{"name":"Eagles","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":1500,"blue":-2000},"blue_capture":{"red":-2000,"blue":1500}}}');
+      await env.FLAGS.put("9",'{"name":"Giants","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+      await env.FLAGS.put("10",'{"name":"Jaguars","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+      await env.FLAGS.put("11",'{"name":"Jets","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":1500,"blue":-2000},"blue_capture":{"red":-2000,"blue":1500}}}');
+      await env.FLAGS.put("12",'{"name":"Patriots","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+      await env.FLAGS.put("13",'{"name":"Ravens","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}');
+      await env.FLAGS.put("14",'{"name":"Saints","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+      await env.FLAGS.put("15",'{"name":"Seahawks","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+      await env.FLAGS.put("16",'{"name":"Texans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+      await env.FLAGS.put("17",'{"name":"Titans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":2000,"blue":0},"blue_capture":{"red":0,"blue":2000}}}');
+      await env.FLAGS.put("18",'{"name":"Vikings","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
       return new Response(null, { status: 200 });
     }
   } else {
@@ -718,9 +617,8 @@ async function resetBoard(request, env) {
 }
 
 /**
- * confirmContract will notify the user that their submitted
- * contract has been logged successfully by the Worker.
- * @returns {Response}
+ * confirmContract will notify the user that their submitted contract has been
+ * logged successfully by the Worker.
  */
 async function confirmContract() {
   return new Response("Contract received 💬", {
@@ -731,13 +629,6 @@ async function confirmContract() {
 
 /**
  * handleRequest consumes a request forwarded by the main event listener.
- * Depending on the URL path, this function defers Responses to the functions
- * written above. If no suitable function is found for the requested path,
- * a 404 Not Found response is issued to the user. Quack!
- * @param {Request} request
- * @param {any} env
- * @param {any} ctx
- * @returns {Response}
  */
 async function handleRequest(request, env, ctx) {
   const url = new URL(request.url);
