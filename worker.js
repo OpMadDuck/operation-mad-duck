@@ -10,10 +10,27 @@ body {
   font-family: system-ui;
   height: 100%;
   margin: 0;
+  /* UPDATE: Logo Resizing */
+  background-image: url('https://raw.githubusercontent.com/OpMadDuck/operation-mad-duck/d927955357373be2d3b129734c25de23c6c77417/mad-duck-toc-logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+  width: 100%;
 }
+/* Ensure the logo area itself is limited to 50% width visually */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 25%; width: 50%; height: 100%;
+    background: inherit;
+    background-size: contain;
+    z-index: -1;
+}
+
 h1 {
   background-color: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(10px);
   border-radius: 18px;
   color: black;
   padding: 18px;
@@ -27,38 +44,26 @@ h2 {
   text-align: center;
   cursor: pointer;
 }
-/* TABLE: High transparency with Glassmorphism blur */
+/* UPDATE: Glassmorphism Table */
 table {
-  background-color: rgba(255, 255, 255, 0.6); 
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   border-collapse: collapse;
   border-radius: 18px;
-  color: #1d1d1f;
+  color: black;
   margin: 18px;
   min-width: 100%;
   padding: 18px;
   text-align: left;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 th, td {
   background-color: transparent !important;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0,0,0,0.05);
   border-collapse: collapse;
   overflow: hidden;
-  padding: 10px;
+  padding: 7px;
   text-overflow: ellipsis;
-}
-/* WINNING ROWS: Semi-transparent so logo is visible */
-.winner-red {
-    background-color: rgba(255, 59, 48, 0.4) !important;
-    color: black !important;
-    font-weight: bold;
-}
-.winner-blue {
-    background-color: rgba(0, 122, 255, 0.4) !important;
-    color: black !important;
-    font-weight: bold;
 }
 .container {
   align-items: center;
@@ -71,95 +76,114 @@ th, td {
   align-items: center;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify(content: center;
   max-width: 95%;
   min-width: 85%;
   text-align:center;
 }
+/* UPDATE: Transparent Controls Container */
 .controls-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  padding: 20px;
-  background-color: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
-  border-radius: 18px;
-  width: 90%;
-  margin-top: 20px;
-  margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 18px;
+    width: 90%; 
 }
-/* CENTERED BUTTONS */
+/* UPDATE: Buttons Centered */
 .button-row {
-  display: flex;
-  align-items: center;
-  justify-content: center; 
-  gap: 20px;
-  width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    gap: 20px;
+    width: 100%; 
 }
 #timerDisplay {
-  font-size: 2.5em;
-  font-weight: bold;
-  color: #1d1d1f;
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-top: 10px;
+    color: #1d1d1f;
 }
 .reveal-btn, .control-btn {
-  border: none;
-  border-radius: 8px;
-  padding: 10px 15px;
-  font-size: 1em;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    color: white;
 }
 .reveal-btn {
-  background-color: #ff9500;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  font-size: 1.5em;
+    background-color: #ff9500; 
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 1.5em;
+}
+.reveal-btn:disabled, .control-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 }
 #startTimerBtn {
-  background-color: #007AFF;
-  border-radius: 50%;
-  width: 100px;
-  height: 100px;
+    background-color: #007AFF; 
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    font-size: 1em;
 }
-.pause-btn { background-color: #ff3b30; }
-.resume-btn { background-color: #34c759; }
-.refresh-btn-on { background-color: #34c759; }
-.refresh-btn-off { background-color: #ff3b30; }
-.reset-flag-btn { background-color: #5856d6; }
+#startTimerBtn:disabled {
+    background-color: #cccccc;
+}
+.pause-btn { background-color: #ff3b30; } 
+.resume-btn { background-color: #34c759; } 
+.refresh-btn-on { background-color: #34c759; } 
+.refresh-btn-off { background-color: #ff3b30; } 
+.reset-flag-btn { background-color: #5856d6; } 
 
-/* OPAQUE YELLOW CAPTURE BUTTON */
+/* UPDATE: Opaque Yellow Capture Button */
 .capture-btn { 
-    background-color: #FFD700; 
-    color: black; 
+    background-color: #FFD700 !important; 
+    color: black !important;
     width: 100%; 
-    margin-top: 10px;
+    margin-top:10px; 
 }
+
 #winnerAnnouncer {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background-color: rgba(0, 0, 0, 0.9);
-  color: white;
-  font-size: 5vw;
-  font-weight: bold;
-  text-align: center;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    font-size: 5vw;
+    font-weight: bold;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 .close-btn {
-  position: absolute;
-  top: 20px; right: 40px;
-  font-size: 50px;
-  cursor: pointer;
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    font-size: 50px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    line-height: 1;
 }
 </style>
 `;
 
+/**
+ * flagPage consumes a flag object and returns a response body as a string.
+ */
 const flagPage = (flag) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -181,45 +205,46 @@ const flagPage = (flag) => `
       const urlParams = new URLSearchParams(queryString);
       const id = urlParams.get("id");
       window.history.replaceState(null, "", "/");
-      
       const captureFlag = (contract) => {
         if (!contract) return;
+        const payload = { contract };
         fetch("/capture?id=" + id, {
           method: "POST",
-          body: JSON.stringify({ contract }),
+          body: JSON.stringify(payload),
           headers: { "Content-Type": "application/json" }
-        }).then(async (res) => {
-          if (!res.ok) alert("Capture failed.");
-          else window.location.replace("/confirm");
+        }).then(async (response) => {
+          if (!response.ok) {
+            const errorText = await response.text();
+            alert("Capture failed.\\n" + errorText);
+          } else {
+            window.location.replace("/confirm");
+          }
+        }).catch((err) => {
+          alert("Unexpected error submitting contract: " + err.message);
         });
       };
-      document.querySelector("h2").addEventListener("click", () => {
-        const contract = prompt("Enter team contract:");
+      const requestContract = () => {
+        const contract = prompt("Please enter your team's contract:");
         captureFlag(contract);
-      });
+      };
+      document.querySelector("h2").addEventListener("click", requestContract);
     </script>
   </body>
 </html>
 `;
 
+/**
+ * boardPage consumes an array of all flag objects and returns a response
+ * body as a string.
+ */
 const boardPage = (flags) => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Score Board</title>
+    <title>Operation Mad Duck | Score Board</title>
     ${style}
-    <style>
-        body {
-            background-image: url('https://raw.githubusercontent.com/OpMadDuck/operation-mad-duck/d927955357373be2d3b129734c25de23c6c77417/mad-duck-toc-logo.png');
-            background-size: 35%; 
-            background-position: center center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-            background-color: #F5F5F7;
-        }
-    </style>
   </head>
   <body>
     <div class="container">
@@ -233,10 +258,13 @@ const boardPage = (flags) => `
               <th style="width:10%">Blue</th>
             </tr>
           </thead>
-          <tbody id='scoreBoard'></tbody>
+          <tbody id='scoreBoard'>
+          </tbody>
           <tr>
-            <th>Total</th><th></th>
-            <th id='redSum'></th><th id='blueSum'></th>
+            <th></th>
+            <th></th>
+            <th id='redSum'></th>
+            <th id='blueSum'></th>
           </tr>
         </table>
         <div class="controls-container">
@@ -262,140 +290,354 @@ const boardPage = (flags) => `
     </div>
   </body>
   <script>
-    const flags = ${flags};
-    const scoreBoard = document.querySelector("#scoreBoard");
-    let redSum = 0, blueSum = 0;
+    const flags = ${flags}
+    
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    
+    const scoreBoard = document.querySelector("#scoreBoard")
+    var redSum = 0
+    var blueSum = 0
 
     flags.forEach((flag) => {
-      const row = document.createElement("tr");
-      if ((flag.name === 'Chargers' && localStorage.getItem('chargersRevealed') !== 'true') ||
-          (flag.name === 'Ravens' && localStorage.getItem('ravensRevealed') !== 'true')) {
+      var row = document.createElement("tr");
+      row.id = 'flag-row-' + flag.name; 
+
+      var name = document.createElement("td");
+      var contracts = document.createElement("td");
+      var red = document.createElement("td");
+      var blue = document.createElement("td");
+      
+      name.innerHTML = flag.name;
+
+      if (flag.name === 'Chargers' && localStorage.getItem('chargersRevealed') !== 'true') {
+          row.style.display = 'none';
+      }
+      if (flag.name === 'Ravens' && localStorage.getItem('ravensRevealed') !== 'true') {
           row.style.display = 'none';
       }
 
       let winningContractID;
       if(flag.winner) {
-        const winnerArray = flag.winner.split(',');
+        let winnerArray = flag.winner.split(',');
         winningContractID = parseInt(winnerArray[1]);
-        const team = winnerArray[0];
-        const points = flag.points[team + '_capture'];
-        redSum += points.red; blueSum += points.blue;
-        row.className = team === 'red' ? 'winner-red' : 'winner-blue';
-        
-        let contractHtml = '';
-        flag.contracts.forEach((c, i) => {
-          contractHtml += (i === winningContractID ? '<strong>' : '<em>') + flag.times[i] + 'Z - ' + c + (i === winningContractID ? '</strong>' : '</em>') + '<br>';
-        });
-        row.innerHTML = '<td>'+flag.name+'</td><td>'+contractHtml+'</td><td>'+points.red+'</td><td>'+points.blue+'</td>';
-      } else {
-        row.innerHTML = '<td>'+flag.name+'</td><td>'+flag.contracts.join('<br>')+'</td><td>0</td><td>0</td>';
+        let pointsAwarded;
+        let winningTeamColor;
+
+        if (winnerArray[0] === 'red') {
+          pointsAwarded = flag.points.red_capture;
+          winningTeamColor = 'rgba(255, 0, 0, 0.4)'; // Refined transparency
+        } else if (winnerArray[0] === 'blue') {
+          pointsAwarded = flag.points.blue_capture;
+          winningTeamColor = 'rgba(0, 0, 255, 0.4)'; // Refined transparency
+        }
+
+        if (pointsAwarded) {
+          redSum += pointsAwarded.red;
+          blueSum += pointsAwarded.blue;
+          red.innerHTML = pointsAwarded.red;
+          blue.innerHTML = pointsAwarded.blue;
+          
+          const cells = [name, contracts, red, blue];
+          cells.forEach(cell => {
+              cell.style.backgroundColor = winningTeamColor;
+              cell.style.color = 'black';
+              cell.style.fontWeight = 'bold';
+          });
+        }
       }
+
+      for (let i = 0; i < flag.contracts.length; i++) {
+        if (i === winningContractID) {
+          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>';
+        } else {
+          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>';
+        }
+      }
+
+      row.appendChild(name);
+      row.appendChild(contracts);
+      row.appendChild(red);
+      row.appendChild(blue);
       scoreBoard.appendChild(row);
     });
 
-    document.querySelector("#redSum").innerText = redSum;
-    document.querySelector("#blueSum").innerText = blueSum;
+    document.querySelector("#redSum").innerHTML = redSum;
+    document.querySelector("#blueSum").innerHTML = blueSum;
 
-    // --- ADMIN LOGIC ---
     const revealChargersBtn = document.querySelector("#revealChargersBtn");
     const revealRavensBtn = document.querySelector("#revealRavensBtn");
+    const resetChargersBtn = document.querySelector("#resetChargersBtn");
+    const resetRavensBtn = document.querySelector("#resetRavensBtn");
     const startBtn = document.querySelector("#startTimerBtn");
     const pauseResumeBtn = document.querySelector("#pauseResumeBtn");
-    const toggleRefreshBtn = document.querySelector("#toggleRefreshBtn");
     const timerDisplay = document.querySelector("#timerDisplay");
+    const winnerAnnouncer = document.querySelector("#winnerAnnouncer");
+    const winnerTextElement = document.querySelector("#winnerText");
+    const closeBtn = document.querySelector(".close-btn");
+    const toggleRefreshBtn = document.querySelector("#toggleRefreshBtn");
+    const screenCaptureBtn = document.querySelector("#screenCaptureBtn");
+    let timerInterval;
 
-    // Reveal Logic
+    screenCaptureBtn.addEventListener("click", () => {
+        const table = document.querySelector("#mainTable");
+        const range = document.createRange();
+        range.selectNode(table);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        try {
+            document.execCommand('copy');
+            alert("Scoreboard copied to clipboard!");
+        } catch(err) {
+            alert("Failed to copy table.");
+        }
+        window.getSelection().removeAllRanges();
+    });
+
     if (localStorage.getItem('chargersRevealed') === 'true') revealChargersBtn.disabled = true;
-    revealChargersBtn.onclick = () => { localStorage.setItem('chargersRevealed', 'true'); window.location.reload(); };
+    else revealChargersBtn.addEventListener("click", () => { localStorage.setItem('chargersRevealed', 'true'); window.location.reload(); });
+    
     if (localStorage.getItem('ravensRevealed') === 'true') revealRavensBtn.disabled = true;
-    revealRavensBtn.onclick = () => { localStorage.setItem('ravensRevealed', 'true'); window.location.reload(); };
+    else revealRavensBtn.addEventListener("click", () => { localStorage.setItem('ravensRevealed', 'true'); window.location.reload(); });
 
-    // Auto Refresh Logic
-    const autoRefresh = localStorage.getItem('autoRefresh') !== 'false';
-    toggleRefreshBtn.innerText = autoRefresh ? 'Auto-Refresh: On' : 'Auto-Refresh: Off';
-    toggleRefreshBtn.className = autoRefresh ? 'control-btn refresh-btn-on' : 'control-btn refresh-btn-off';
-    toggleRefreshBtn.onclick = () => { localStorage.setItem('autoRefresh', !autoRefresh); window.location.reload(); };
-    if(autoRefresh) setTimeout(() => window.location.reload(), 15000);
+    resetChargersBtn.addEventListener('click', () => { localStorage.removeItem('chargersRevealed'); window.location.reload(); });
+    resetRavensBtn.addEventListener('click', () => { localStorage.removeItem('ravensRevealed'); window.location.reload(); });
 
-    // Timer Logic
-    const endTime = localStorage.getItem('timerEndTime');
-    const pausedTime = localStorage.getItem('pausedTime');
-
-    if (endTime) {
-        startBtn.disabled = true;
-        pauseResumeBtn.innerText = 'Pause Timer';
-        pauseResumeBtn.className = 'control-btn pause-btn';
-        pauseResumeBtn.onclick = () => {
-            localStorage.setItem('pausedTime', endTime - new Date().getTime());
-            localStorage.removeItem('timerEndTime');
-            window.location.reload();
-        };
-        setInterval(() => {
-            const rem = endTime - new Date().getTime();
-            if (rem <= 0) { timerDisplay.innerText = "00:00"; return; }
-            const m = Math.floor(rem / 60000), s = Math.floor((rem % 60000) / 1000);
-            timerDisplay.innerText = String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
-        }, 1000);
-    } else if (pausedTime) {
-        startBtn.disabled = true;
-        pauseResumeBtn.innerText = 'Resume Timer';
-        pauseResumeBtn.className = 'control-btn resume-btn';
-        pauseResumeBtn.onclick = () => {
-            localStorage.setItem('timerEndTime', new Date().getTime() + parseInt(pausedTime));
-            localStorage.removeItem('pausedTime');
-            window.location.reload();
-        };
+    const autoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false';
+    if (autoRefreshEnabled) {
+        setTimeout(() => window.location.reload(), 15000);
+        toggleRefreshBtn.textContent = 'Auto-Refresh: On';
+        toggleRefreshBtn.className = 'control-btn refresh-btn-on';
     } else {
-        startBtn.onclick = () => {
-            localStorage.setItem('timerEndTime', new Date().getTime() + (30 * 60 * 1000));
-            window.location.reload();
+        toggleRefreshBtn.textContent = 'Auto-Refresh: Off';
+        toggleRefreshBtn.className = 'control-btn refresh-btn-off';
+    }
+    toggleRefreshBtn.addEventListener('click', () => {
+      localStorage.setItem('autoRefresh', !autoRefreshEnabled);
+      window.location.reload();
+    });
+
+    const startInitialCountdown = () => {
+        const thirtyMinutes = 30 * 60 * 1000;
+        const endTime = new Date().getTime() + thirtyMinutes;
+        localStorage.setItem('timerEndTime', endTime);
+        localStorage.removeItem('pausedTime');
+        window.location.reload();
+    };
+
+    const pauseTimer = () => {
+        const endTime = parseInt(localStorage.getItem('timerEndTime'), 10);
+        const remainingTime = endTime - new Date().getTime();
+        if (remainingTime > 0) localStorage.setItem('pausedTime', remainingTime);
+        localStorage.removeItem('timerEndTime');
+        window.location.reload();
+    };
+
+    const resumeTimer = () => {
+        const pausedTime = parseInt(localStorage.getItem('pausedTime'), 10);
+        if (pausedTime > 0) {
+            const newEndTime = new Date().getTime() + pausedTime;
+            localStorage.setItem('timerEndTime', newEndTime);
+        }
+        localStorage.removeItem('pausedTime');
+        window.location.reload();
+    };
+    
+    const announceWinner = () => {
+        let winnerText = "THE WINNER IS ";
+        if (redSum > blueSum) winnerText += "RED TEAM";
+        else if (blueSum > redSum) winnerText += "BLUE TEAM";
+        else winnerText = "IT'S A TIE!";
+        winnerTextElement.textContent = winnerText;
+        winnerAnnouncer.style.display = 'flex';
+    };
+
+    const storedEndTime = localStorage.getItem('timerEndTime');
+    const storedPausedTime = localStorage.getItem('pausedTime');
+
+    if (storedEndTime) {
+        startBtn.disabled = true;
+        pauseResumeBtn.textContent = 'Pause Timer';
+        pauseResumeBtn.className = 'control-btn pause-btn';
+        pauseResumeBtn.addEventListener('click', pauseTimer);
+        const endTime = parseInt(storedEndTime, 10);
+        const updateDisplay = () => {
+            const now = new Date().getTime();
+            const remaining = endTime - now;
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = '00:00';
+                announceWinner();
+            } else {
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+                timerDisplay.textContent = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
+            }
         };
+        updateDisplay();
+        timerInterval = setInterval(updateDisplay, 1000);
+    } else if (storedPausedTime) {
+        startBtn.disabled = true;
+        pauseResumeBtn.textContent = 'Resume Timer';
+        pauseResumeBtn.className = 'control-btn resume-btn';
+        pauseResumeBtn.addEventListener('click', resumeTimer);
+        const remaining = parseInt(storedPausedTime, 10);
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        timerDisplay.textContent = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
+    } else {
+        startBtn.disabled = false;
+        pauseResumeBtn.disabled = true;
+        startBtn.addEventListener('click', startInitialCountdown);
     }
 
-    document.querySelector("#screenCaptureBtn").onclick = () => {
-        const range = document.createRange();
-        range.selectNode(document.getElementById("mainTable"));
-        window.getSelection().addRange(range);
-        document.execCommand('copy');
-        alert("Table Copied!");
-    };
+    closeBtn.addEventListener("click", () => { winnerAnnouncer.style.display = 'none'; });
   </script>
 </html>
 `;
 
-// Helper for KV Reset
-async function resetGameData(env) {
-    const names = ["Broncos", "Buccaneers", "Chargers", "Chiefs", "Commanders", "Cowboys", "Dolphins", "Eagles", "Giants", "Jaguars", "Jets", "Patriots", "Ravens", "Saints", "Seahawks", "Texans", "Titans", "Vikings"];
-    for(let i=0; i<names.length; i++){
-        await env.FLAGS.put((i+1).toString(), JSON.stringify({
-            name: names[i], times: [], contracts: [], winner: null,
-            points: { red_capture: {red:100, blue:-100}, blue_capture: {red:-100, blue:100} }
-        }));
+/**
+ * resetPage returns a response body as a string.
+ */
+const resetPage = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Operation Mad Duck | Reset</title>
+    ${style}
+  </head>
+  <body>
+    <div class="container">
+      <div class="subcontainer">
+        <h2>Reset!</h2>
+      </div>
+      </div>
+  </body>
+  <script>
+    var reset = (confirmation) => {
+      if (confirmation === 'RESETMADDUCK') {
+        localStorage.removeItem('timerEndTime');
+        localStorage.removeItem('pausedTime');
+        localStorage.removeItem('chargersRevealed');
+        localStorage.removeItem('ravensRevealed');
+        localStorage.removeItem('autoRefresh');
+        fetch("/reset", { method: "POST", body: confirmation })
+        .then((response) => {
+          if (!response.ok) alert("HTTP Error " + response.status);
+          else window.location.href = "/board";
+        })
+      } else alert("Please enter RESETMADDUCK in all caps.");
     }
+    document.querySelector("h2").addEventListener("click", () => {
+      let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
+      reset(confirmation);
+    });
+  </script>
+</html>
+`;
+
+async function resetGameData(env) {
+    await env.FLAGS.put("1",'{"name":"Broncos","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+    await env.FLAGS.put("2",'{"name":"Buccaneers","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":5000,"blue":-1000},"blue_capture":{"red":-1000,"blue":5000}}}');
+    await env.FLAGS.put("3",'{"name":"Chargers","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-500,"blue":100}}}');
+    await env.FLAGS.put("4",'{"name":"Chiefs","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+    await env.FLAGS.put("5",'{"name":"Commanders","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+    await env.FLAGS.put("6",'{"name":"Cowboys","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+    await env.FLAGS.put("7",'{"name":"Dolphins","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+    await env.FLAGS.put("8",'{"name":"Eagles","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":1500,"blue":-2000},"blue_capture":{"red":-2000,"blue":1500}}}');
+    await env.FLAGS.put("9",'{"name":"Giants","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+    await env.FLAGS.put("10",'{"name":"Jaguars","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+    await env.FLAGS.put("11",'{"name":"Jets","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":1500,"blue":-2000},"blue_capture":{"red":-2000,"blue":1500}}}');
+    await env.FLAGS.put("12",'{"name":"Patriots","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+    await env.FLAGS.put("13",'{"name":"Ravens","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-500},"blue_capture":{"red":-100,"blue":500}}}');
+    await env.FLAGS.put("14",'{"name":"Saints","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":100,"blue":-100},"blue_capture":{"red":-100,"blue":500}}}');
+    await env.FLAGS.put("15",'{"name":"Seahawks","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+    await env.FLAGS.put("16",'{"name":"Texans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+    await env.FLAGS.put("17",'{"name":"Titans","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":2000,"blue":0},"blue_capture":{"red":0,"blue":2000}}}');
+    await env.FLAGS.put("18",'{"name":"Vikings","times":[],"contracts":[],"winner":null,"points":{"red_capture":{"red":500,"blue":-100},"blue_capture":{"red":-100,"blue":100}}}');
+}
+
+async function getFlag(request, env) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  const flag = await env.FLAGS.get(id?.toString(), { type: "json" });
+  if (flag === null) return new Response("Not Found 🦆", { status: 404 });
+  return new Response(flagPage(flag), { headers: { "Content-Type": "text/html" } });
+}
+
+async function captureFlag(request, env) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const json = await request.json();
+    const contract = json?.contract;
+    if (!id || !contract) return new Response("Missing ID or contract.", { status: 400 });
+    const flag = await env.FLAGS.get(id, { type: "json" });
+    if (!flag) return new Response("Flag not found.", { status: 404 });
+    let winner = flag.winner ? flag.winner : await check(contract, id, env);
+    await env.FLAGS.put(id, JSON.stringify({
+        name: flag.name,
+        times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
+        contracts: flag.contracts.concat(contract),
+        points: flag.points,
+        winner: winner,
+    }));
+    return new Response(null, { status: 200 });
+  } catch (err) { return new Response("Error: " + err.toString(), { status: 500 }); }
+}
+
+async function check(contract, id, env) {
+  const flag = await env.FLAGS.get(id, { type: "json" });
+  const redExp = new RegExp(`Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
+  const blueExp = new RegExp(`Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
+  if (redExp.test(contract)) return "red," + flag.contracts.length;
+  if (blueExp.test(contract)) return "blue," + flag.contracts.length;
+  return null;
+}
+
+async function getBoard(env) {
+  const promises = [];
+  for (const key of Array(18).keys()) promises.push(env.FLAGS.get((key + 1).toString(), { type: "json" }));
+  const data = await Promise.all(promises);
+  return new Response(boardPage(JSON.stringify(data)), { headers: { "Content-Type": "text/html" } });
+}
+
+async function resetBoard(request, env) {
+  if (request.method === "POST") {
+    const confirmation = await request.text();
+    if (confirmation === "RESETMADDUCK") {
+      await resetGameData(env);
+      return new Response(null, { status: 200 });
+    }
+  } else return new Response(resetPage, { headers: { "Content-Type": "text/html" } });
+}
+
+async function confirmContract() {
+  return new Response("Contract received 💬", { status: 200, headers: { "Clear-Site-Data": "*" } });
+}
+
+async function handleRequest(request, env, ctx) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  switch (path) {
+    case "/flag": return getFlag(request, env);
+    case "/capture": return captureFlag(request, env);
+    case "/board": return getBoard(env);
+    case "/reset": return resetBoard(request, env);
+    case "/confirm": return confirmContract();
+    default: return new Response("Not Found 🦆", { status: 404 });
+  }
 }
 
 export default {
-    async fetch(request, env) {
-        const url = new URL(request.url);
-        if(url.pathname === "/board") {
-            const data = [];
-            for(let i=1; i<=18; i++) data.push(await env.FLAGS.get(i.toString(), {type:"json"}));
-            return new Response(boardPage(JSON.stringify(data)), {headers:{"Content-Type":"text/html"}});
-        }
-        if(url.pathname === "/capture") {
-            const id = url.searchParams.get("id");
-            const flag = await env.FLAGS.get(id, {type:"json"});
-            const json = await request.json();
-            flag.contracts.push(json.contract);
-            flag.times.push(new Date().toTimeString().split(' ')[0]);
-            await env.FLAGS.put(id, JSON.stringify(flag));
-            return new Response("OK");
-        }
-        if(url.pathname === "/reset") {
-            await resetGameData(env);
-            return new Response("Reset");
-        }
-        return new Response("Worker Live");
-    },
-    async scheduled(event, env) { await resetGameData(env); }
+  async fetch(request, env, ctx) { return handleRequest(request, env, ctx); },
+  async scheduled(event, env, ctx) { await resetGameData(env); }
 }
