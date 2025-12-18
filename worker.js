@@ -43,7 +43,7 @@ table {
   margin: 18px;
   min-width: 100%;
   padding: 18px;
-  text-align: left;
+  text-align: center;
 }
 
 /* UPDATE: Grey borders between rows and columns */
@@ -279,7 +279,7 @@ const boardPage = (flags) => `
                 <button id="resetChargersBtn" class="control-btn reset-flag-btn">Reset 1</button>
                 <button id="resetRavensBtn" class="control-btn reset-flag-btn">Reset 2</button>
             </div>
-            <button id="screenCaptureBtn" class="control-btn capture-btn">📷 Screen Capture (Copy Table)</button>
+            <button id="screenCaptureBtn" class="control-btn capture-btn">📷 Screen Capture </button>
         </div>
       </div>
      </div>
