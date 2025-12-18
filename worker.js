@@ -331,10 +331,10 @@ const boardPage = (flags) => `
 
         if (winnerArray[0] === 'red') {
           pointsAwarded = flag.points.red_capture;
-          winningTeamColor = 'rgba(255, 0, 0, 0.5)'; // UPDATE: 50% transparency
+          winningTeamColor = 'rgba(255, 0, 0, 0.7)'; // UPDATE: 70% transparency
         } else if (winnerArray[0] === 'blue') {
           pointsAwarded = flag.points.blue_capture;
-          winningTeamColor = 'rgba(0, 0, 255, 0.5)'; // UPDATE: 50% transparency
+          winningTeamColor = 'rgba(0, 0, 255, 0.7)'; // UPDATE: 70% transparency
         }
 
         if (pointsAwarded) {
