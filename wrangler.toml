@@ -1,4 +1,4 @@
-name = "development"
+name = "operation"
 main = "worker.js"
 compatibility_date = "2025-08-04"
 type = "module"
