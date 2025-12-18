@@ -70,10 +70,11 @@ th, td {
   border-radius: 18px;
   width: 90%;
 }
+/* UPDATE: Changed from flex-end (right) to center */
 .button-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center; 
   gap: 20px;
   width: 100%;
 }
@@ -119,7 +120,14 @@ th, td {
 .refresh-btn-on { background-color: #34c759; }
 .refresh-btn-off { background-color: #ff3b30; }
 .reset-flag-btn { background-color: #5856d6; }
-.capture-btn { background-color: #28a745; width: 100%; margin-top:10px; }
+
+/* UPDATE: Changed to Opaque Yellow with Black text */
+.capture-btn { 
+    background-color: #FFD700; /* Gold/Yellow */
+    color: black; 
+    width: 100%; 
+    margin-top: 10px; 
+}
 
 #winnerAnnouncer {
   display: none;
@@ -216,6 +224,15 @@ const boardPage = (flags) => `
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Operation Mad Duck | Score Board</title>
     ${style}
+    <style>
+        body {
+            background-image: url('https://raw.githubusercontent.com/OpMadDuck/operation-mad-duck/d927955357373be2d3b129734c25de23c6c77417/mad-duck-toc-logo.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+    </style>
   </head>
   <body>
     <div class="container">
