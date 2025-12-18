@@ -10,13 +10,11 @@ body {
   font-family: system-ui;
   height: 100%;
   margin: 0;
-  /* UPDATE: Logo Resizing */
   background-image: url('https://raw.githubusercontent.com/OpMadDuck/operation-mad-duck/d927955357373be2d3b129734c25de23c6c77417/mad-duck-toc-logo.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center center;
   background-attachment: fixed;
-  /* Logo limited to 50% width of screen */
   width: 100%;
 }
 
@@ -35,7 +33,7 @@ h2 {
   text-align: center;
   cursor: pointer;
 }
-/* UPDATE: Glassmorphism and Visual Depth */
+
 table {
   background-color: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(5px);
@@ -47,14 +45,31 @@ table {
   padding: 18px;
   text-align: left;
 }
+
+/* UPDATE: Grey borders between rows and columns */
 th, td {
   background-color: rgba(255, 255, 255, 0.1);
-  border: 2px solid #F5F5F7;
+  border: 2px solid #8e8e93; 
   border-collapse: collapse;
   overflow: hidden;
   padding: 7px;
   text-overflow: ellipsis;
 }
+
+/* UPDATE: Flashing animations for leaders */
+@keyframes flash-red {
+    0% { background-color: rgba(255, 0, 0, 0.2); }
+    50% { background-color: rgba(255, 0, 0, 0.8); }
+    100% { background-color: rgba(255, 0, 0, 0.2); }
+}
+@keyframes flash-blue {
+    0% { background-color: rgba(0, 0, 255, 0.2); }
+    50% { background-color: rgba(0, 0, 255, 0.8); }
+    100% { background-color: rgba(0, 0, 255, 0.2); }
+}
+.leader-red { animation: flash-red 3s infinite ease-in-out; }
+.leader-blue { animation: flash-blue 3s infinite ease-in-out; }
+
 .container {
   align-items: center;
   display: flex;
@@ -71,7 +86,7 @@ th, td {
   min-width: 85%;
   text-align:center;
 }
-/* UPDATE: Stretches to fit window/screen and glassmorphism */
+
 .controls-container {
     display: flex;
     flex-direction: column;
@@ -84,7 +99,7 @@ th, td {
     width: 100%; 
     box-sizing: border-box;
 }
-/* UPDATE: Buttons Centered */
+
 .button-row {
     display: flex;
     align-items: center;
@@ -109,7 +124,7 @@ th, td {
     color: white;
 }
 .reveal-btn {
-    background-color: #ff9500; /* Orange */
+    background-color: #ff9500; 
     border-radius: 50%;
     width: 60px;
     height: 60px;
@@ -120,7 +135,7 @@ th, td {
     cursor: not-allowed;
 }
 #startTimerBtn {
-    background-color: #007AFF; /* Blue */
+    background-color: #007AFF; 
     border-radius: 50%;
     width: 100px;
     height: 100px;
@@ -129,13 +144,12 @@ th, td {
 #startTimerBtn:disabled {
     background-color: #cccccc;
 }
-.pause-btn { background-color: #ff3b30; } /* Red */
-.resume-btn { background-color: #34c759; } /* Green */
-.refresh-btn-on { background-color: #34c759; } /* Green */
-.refresh-btn-off { background-color: #ff3b30; } /* Red */
-.reset-flag-btn { background-color: #5856d6; } /* Indigo */
+.pause-btn { background-color: #ff3b30; } 
+.resume-btn { background-color: #34c759; } 
+.refresh-btn-on { background-color: #34c759; } 
+.refresh-btn-off { background-color: #ff3b30; } 
+.reset-flag-btn { background-color: #5856d6; } 
 
-/* UPDATE: Capture button yellow and opaque */
 .capture-btn { 
     background-color: #FFFF00 !important; 
     color: #000000 !important; 
@@ -173,9 +187,6 @@ th, td {
 </style>
 `;
 
-/**
- * flagPage consumes a flag object and returns a response body as a string.
- */
 const flagPage = (flag) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -225,10 +236,6 @@ const flagPage = (flag) => `
 </html>
 `;
 
-/**
- * boardPage consumes an array of all flag objects and returns a response
- * body as a string.
- */
 const boardPage = (flags) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -324,10 +331,10 @@ const boardPage = (flags) => `
 
         if (winnerArray[0] === 'red') {
           pointsAwarded = flag.points.red_capture;
-          winningTeamColor = 'red';
+          winningTeamColor = 'rgba(255, 0, 0, 0.5)'; // UPDATE: 50% transparency
         } else if (winnerArray[0] === 'blue') {
           pointsAwarded = flag.points.blue_capture;
-          winningTeamColor = 'blue';
+          winningTeamColor = 'rgba(0, 0, 255, 0.5)'; // UPDATE: 50% transparency
         }
 
         if (pointsAwarded) {
@@ -336,11 +343,10 @@ const boardPage = (flags) => `
           red.innerHTML = pointsAwarded.red;
           blue.innerHTML = pointsAwarded.blue;
           
-          /* RESTORED: This turns the row cells red or blue based on the winning team */
           const cells = [name, contracts, red, blue];
           cells.forEach(cell => {
               cell.style.backgroundColor = winningTeamColor;
-              cell.style.color = 'white';
+              cell.style.color = 'black'; // Black text for better visibility on transparent rows
               cell.style.fontWeight = 'bold';
           });
         }
@@ -361,8 +367,17 @@ const boardPage = (flags) => `
       scoreBoard.appendChild(row);
     });
 
-    document.querySelector("#redSum").innerHTML = redSum;
-    document.querySelector("#blueSum").innerHTML = blueSum;
+    const redSumCell = document.querySelector("#redSum");
+    const blueSumCell = document.querySelector("#blueSum");
+    redSumCell.innerHTML = redSum;
+    blueSumCell.innerHTML = blueSum;
+
+    // UPDATE: Flashing leader logic
+    if (redSum > blueSum) {
+        redSumCell.classList.add('leader-red');
+    } else if (blueSum > redSum) {
+        blueSumCell.classList.add('leader-blue');
+    }
 
     const revealChargersBtn = document.querySelector("#revealChargersBtn");
     const revealRavensBtn = document.querySelector("#revealRavensBtn");
@@ -386,7 +401,7 @@ const boardPage = (flags) => `
         window.getSelection().addRange(range);
         try {
             document.execCommand('copy');
-            alert("Scoreboard copied to clipboard! You can paste it into Excel or Email.");
+            alert("Scoreboard copied to clipboard!");
         } catch(err) {
             alert("Failed to copy table.");
         }
