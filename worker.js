@@ -17,7 +17,6 @@ body {
   background-attachment: fixed;
   width: 100%;
 }
-
 h1 {
   background-color: white;
   border-radius: 18px;
@@ -33,7 +32,6 @@ h2 {
   text-align: center;
   cursor: pointer;
 }
-
 table {
   background-color: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(5px);
@@ -45,8 +43,6 @@ table {
   padding: 18px;
   text-align: center;
 }
-
-/* UPDATE: Grey borders between rows and columns */
 th, td {
   background-color: rgba(255, 255, 255, 0.1);
   border: 2px solid #8e8e93; 
@@ -55,8 +51,6 @@ th, td {
   padding: 7px;
   text-overflow: ellipsis;
 }
-
-/* UPDATE: Flashing animations for leaders */
 @keyframes flash-red {
     0% { background-color: rgba(255, 0, 0, 0.2); }
     50% { background-color: rgba(255, 0, 0, 0.8); }
@@ -69,7 +63,6 @@ th, td {
 }
 .leader-red { animation: flash-red 3s infinite ease-in-out; }
 .leader-blue { animation: flash-blue 3s infinite ease-in-out; }
-
 .container {
   align-items: center;
   display: flex;
@@ -86,7 +79,6 @@ th, td {
   min-width: 85%;
   text-align:center;
 }
-
 .controls-container {
     display: flex;
     flex-direction: column;
@@ -99,7 +91,6 @@ th, td {
     width: 100%; 
     box-sizing: border-box;
 }
-
 .button-row {
     display: flex;
     align-items: center;
@@ -149,7 +140,6 @@ th, td {
 .refresh-btn-on { background-color: #34c759; } 
 .refresh-btn-off { background-color: #ff3b30; } 
 .reset-flag-btn { background-color: #5856d6; } 
-
 .capture-btn { 
     background-color: #FFFF00 !important; 
     color: #000000 !important; 
@@ -157,33 +147,6 @@ th, td {
     margin-top:10px; 
     opacity: 1 !important;
 } 
-
-#winnerAnnouncer {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
-    color: white;
-    font-size: 5vw;
-    font-weight: bold;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-.close-btn {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    font-size: 50px;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
-    line-height: 1;
-}
 </style>
 `;
 
@@ -283,10 +246,6 @@ const boardPage = (flags) => `
         </div>
       </div>
      </div>
-    <div id="winnerAnnouncer">
-        <span class="close-btn">&times;</span>
-        <span id="winnerText"></span>
-    </div>
   </body>
   <script>
     const flags = ${flags}
@@ -303,40 +262,34 @@ const boardPage = (flags) => `
     const scoreBoard = document.querySelector("#scoreBoard")
     var redSum = 0
     var blueSum = 0
-
     flags.forEach((flag) => {
       var row = document.createElement("tr");
       row.id = 'flag-row-' + flag.name; 
-
       var name = document.createElement("td");
       var contracts = document.createElement("td");
       var red = document.createElement("td");
       var blue = document.createElement("td");
       
       name.innerHTML = flag.name;
-
       if (flag.name === 'Chargers' && localStorage.getItem('chargersRevealed') !== 'true') {
           row.style.display = 'none';
       }
       if (flag.name === 'Ravens' && localStorage.getItem('ravensRevealed') !== 'true') {
           row.style.display = 'none';
       }
-
       let winningContractID;
       if(flag.winner) {
         let winnerArray = flag.winner.split(',');
         winningContractID = parseInt(winnerArray[1]);
         let pointsAwarded;
         let winningTeamColor;
-
         if (winnerArray[0] === 'red') {
           pointsAwarded = flag.points.red_capture;
-          winningTeamColor = 'rgba(255, 0, 0, 0.7)'; // UPDATE: 70% transparency
+          winningTeamColor = 'rgba(255, 0, 0, 0.7)';
         } else if (winnerArray[0] === 'blue') {
           pointsAwarded = flag.points.blue_capture;
-          winningTeamColor = 'rgba(0, 0, 255, 0.7)'; // UPDATE: 70% transparency
+          winningTeamColor = 'rgba(0, 0, 255, 0.7)';
         }
-
         if (pointsAwarded) {
           redSum += pointsAwarded.red;
           blueSum += pointsAwarded.blue;
@@ -346,39 +299,35 @@ const boardPage = (flags) => `
           const cells = [name, contracts, red, blue];
           cells.forEach(cell => {
               cell.style.backgroundColor = winningTeamColor;
-              cell.style.color = 'black'; // Black text for better visibility on transparent rows
+              cell.style.color = 'white'; // CHANGE: Set text color to white
               cell.style.fontWeight = 'bold';
           });
         }
       }
-
       for (let i = 0; i < flag.contracts.length; i++) {
+        const timeAndContract = flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]);
         if (i === winningContractID) {
-          contracts.innerHTML += '<strong>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</strong><br>';
+          contracts.innerHTML += '<strong>' + timeAndContract + '</strong><br>';
         } else {
-          contracts.innerHTML += '<em>' + flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]) + '</em><br>';
+          contracts.innerHTML += '<em>' + timeAndContract + '</em><br>';
         }
       }
-
       row.appendChild(name);
       row.appendChild(contracts);
       row.appendChild(red);
       row.appendChild(blue);
       scoreBoard.appendChild(row);
     });
-
     const redSumCell = document.querySelector("#redSum");
     const blueSumCell = document.querySelector("#blueSum");
     redSumCell.innerHTML = redSum;
     blueSumCell.innerHTML = blueSum;
-
-    // UPDATE: Flashing leader logic
+    
     if (redSum > blueSum) {
         redSumCell.classList.add('leader-red');
     } else if (blueSum > redSum) {
         blueSumCell.classList.add('leader-blue');
     }
-
     const revealChargersBtn = document.querySelector("#revealChargersBtn");
     const revealRavensBtn = document.querySelector("#revealRavensBtn");
     const resetChargersBtn = document.querySelector("#resetChargersBtn");
@@ -386,13 +335,9 @@ const boardPage = (flags) => `
     const startBtn = document.querySelector("#startTimerBtn");
     const pauseResumeBtn = document.querySelector("#pauseResumeBtn");
     const timerDisplay = document.querySelector("#timerDisplay");
-    const winnerAnnouncer = document.querySelector("#winnerAnnouncer");
-    const winnerTextElement = document.querySelector("#winnerText");
-    const closeBtn = document.querySelector(".close-btn");
     const toggleRefreshBtn = document.querySelector("#toggleRefreshBtn");
     const screenCaptureBtn = document.querySelector("#screenCaptureBtn");
     let timerInterval;
-
     screenCaptureBtn.addEventListener("click", () => {
         const table = document.querySelector("#mainTable");
         const range = document.createRange();
@@ -407,19 +352,16 @@ const boardPage = (flags) => `
         }
         window.getSelection().removeAllRanges();
     });
-
     if (localStorage.getItem('chargersRevealed') === 'true') revealChargersBtn.disabled = true;
     else revealChargersBtn.addEventListener("click", () => { localStorage.setItem('chargersRevealed', 'true'); window.location.reload(); });
     
     if (localStorage.getItem('ravensRevealed') === 'true') revealRavensBtn.disabled = true;
     else revealRavensBtn.addEventListener("click", () => { localStorage.setItem('ravensRevealed', 'true'); window.location.reload(); });
-
     resetChargersBtn.addEventListener('click', () => { localStorage.removeItem('chargersRevealed'); window.location.reload(); });
     resetRavensBtn.addEventListener('click', () => { localStorage.removeItem('ravensRevealed'); window.location.reload(); });
-
     const autoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false';
     if (autoRefreshEnabled) {
-        setTimeout(() => window.location.reload(), 15000);
+        setTimeout(() => window.location.reload(), 5000); // CHANGE: Refresh rate set to 5 seconds
         toggleRefreshBtn.textContent = 'Auto-Refresh: On';
         toggleRefreshBtn.className = 'control-btn refresh-btn-on';
     } else {
@@ -430,7 +372,6 @@ const boardPage = (flags) => `
       localStorage.setItem('autoRefresh', !autoRefreshEnabled);
       window.location.reload();
     });
-
     const startInitialCountdown = () => {
         const thirtyMinutes = 30 * 60 * 1000;
         const endTime = new Date().getTime() + thirtyMinutes;
@@ -438,7 +379,6 @@ const boardPage = (flags) => `
         localStorage.removeItem('pausedTime');
         window.location.reload();
     };
-
     const pauseTimer = () => {
         const endTime = parseInt(localStorage.getItem('timerEndTime'), 10);
         const remainingTime = endTime - new Date().getTime();
@@ -448,7 +388,6 @@ const boardPage = (flags) => `
         localStorage.removeItem('timerEndTime');
         window.location.reload();
     };
-
     const resumeTimer = () => {
         const pausedTime = parseInt(localStorage.getItem('pausedTime'), 10);
         if (pausedTime > 0) {
@@ -458,19 +397,8 @@ const boardPage = (flags) => `
         localStorage.removeItem('pausedTime');
         window.location.reload();
     };
-    
-    const announceWinner = () => {
-        let winnerText = "THE WINNER IS ";
-        if (redSum > blueSum) winnerText += "RED TEAM";
-        else if (blueSum > redSum) winnerText += "BLUE TEAM";
-        else winnerText = "IT'S A TIE!";
-        winnerTextElement.textContent = winnerText;
-        winnerAnnouncer.style.display = 'flex';
-    };
-
     const storedEndTime = localStorage.getItem('timerEndTime');
     const storedPausedTime = localStorage.getItem('pausedTime');
-
     if (storedEndTime) {
         startBtn.disabled = true;
         pauseResumeBtn.textContent = 'Pause Timer';
@@ -484,7 +412,6 @@ const boardPage = (flags) => `
             if (remaining <= 0) {
                 clearInterval(timerInterval);
                 timerDisplay.textContent = '00:00';
-                announceWinner();
             } else {
                 const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
@@ -509,9 +436,6 @@ const boardPage = (flags) => `
         pauseResumeBtn.disabled = true;
         startBtn.addEventListener('click', startInitialCountdown);
     }
-    closeBtn.addEventListener("click", () => {
-        winnerAnnouncer.style.display = 'none';
-    });
   </script>
 </html>
 `;
