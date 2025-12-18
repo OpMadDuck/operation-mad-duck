@@ -16,21 +16,12 @@ body {
   background-repeat: no-repeat;
   background-position: center center;
   background-attachment: fixed;
+  /* Logo limited to 50% width of screen */
   width: 100%;
-}
-/* Ensure the logo area itself is limited to 50% width visually */
-body::before {
-    content: "";
-    position: fixed;
-    top: 0; left: 25%; width: 50%; height: 100%;
-    background: inherit;
-    background-size: contain;
-    z-index: -1;
 }
 
 h1 {
-  background-color: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  background-color: white;
   border-radius: 18px;
   color: black;
   padding: 18px;
@@ -44,11 +35,10 @@ h2 {
   text-align: center;
   cursor: pointer;
 }
-/* UPDATE: Glassmorphism Table */
+/* UPDATE: Glassmorphism and Visual Depth */
 table {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
   border-collapse: collapse;
   border-radius: 18px;
   color: black;
@@ -58,8 +48,8 @@ table {
   text-align: left;
 }
 th, td {
-  background-color: transparent !important;
-  border: 1px solid rgba(0,0,0,0.05);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid #F5F5F7;
   border-collapse: collapse;
   overflow: hidden;
   padding: 7px;
@@ -76,12 +66,12 @@ th, td {
   align-items: center;
   display: flex;
   flex-direction: column;
-  justify(content: center;
+  justify-content: center;
   max-width: 95%;
   min-width: 85%;
   text-align:center;
 }
-/* UPDATE: Transparent Controls Container */
+/* UPDATE: Stretches to fit window/screen and glassmorphism */
 .controls-container {
     display: flex;
     flex-direction: column;
@@ -89,15 +79,16 @@ th, td {
     gap: 15px;
     padding: 20px;
     background-color: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(5px);
     border-radius: 18px;
-    width: 90%; 
+    width: 100%; 
+    box-sizing: border-box;
 }
 /* UPDATE: Buttons Centered */
 .button-row {
     display: flex;
     align-items: center;
-    justify-content: center; 
+    justify-content: center;
     gap: 20px;
     width: 100%; 
 }
@@ -118,7 +109,7 @@ th, td {
     color: white;
 }
 .reveal-btn {
-    background-color: #ff9500; 
+    background-color: #ff9500; /* Orange */
     border-radius: 50%;
     width: 60px;
     height: 60px;
@@ -129,7 +120,7 @@ th, td {
     cursor: not-allowed;
 }
 #startTimerBtn {
-    background-color: #007AFF; 
+    background-color: #007AFF; /* Blue */
     border-radius: 50%;
     width: 100px;
     height: 100px;
@@ -138,19 +129,20 @@ th, td {
 #startTimerBtn:disabled {
     background-color: #cccccc;
 }
-.pause-btn { background-color: #ff3b30; } 
-.resume-btn { background-color: #34c759; } 
-.refresh-btn-on { background-color: #34c759; } 
-.refresh-btn-off { background-color: #ff3b30; } 
-.reset-flag-btn { background-color: #5856d6; } 
+.pause-btn { background-color: #ff3b30; } /* Red */
+.resume-btn { background-color: #34c759; } /* Green */
+.refresh-btn-on { background-color: #34c759; } /* Green */
+.refresh-btn-off { background-color: #ff3b30; } /* Red */
+.reset-flag-btn { background-color: #5856d6; } /* Indigo */
 
-/* UPDATE: Opaque Yellow Capture Button */
+/* UPDATE: Capture button yellow and opaque */
 .capture-btn { 
-    background-color: #FFD700 !important; 
-    color: black !important;
+    background-color: #FFFF00 !important; 
+    color: #000000 !important; 
     width: 100%; 
     margin-top:10px; 
-}
+    opacity: 1 !important;
+} 
 
 #winnerAnnouncer {
     display: none;
@@ -332,10 +324,10 @@ const boardPage = (flags) => `
 
         if (winnerArray[0] === 'red') {
           pointsAwarded = flag.points.red_capture;
-          winningTeamColor = 'rgba(255, 0, 0, 0.4)'; // Refined transparency
+          winningTeamColor = 'red';
         } else if (winnerArray[0] === 'blue') {
           pointsAwarded = flag.points.blue_capture;
-          winningTeamColor = 'rgba(0, 0, 255, 0.4)'; // Refined transparency
+          winningTeamColor = 'blue';
         }
 
         if (pointsAwarded) {
@@ -344,10 +336,11 @@ const boardPage = (flags) => `
           red.innerHTML = pointsAwarded.red;
           blue.innerHTML = pointsAwarded.blue;
           
+          /* RESTORED: This turns the row cells red or blue based on the winning team */
           const cells = [name, contracts, red, blue];
           cells.forEach(cell => {
               cell.style.backgroundColor = winningTeamColor;
-              cell.style.color = 'black';
+              cell.style.color = 'white';
               cell.style.fontWeight = 'bold';
           });
         }
@@ -393,7 +386,7 @@ const boardPage = (flags) => `
         window.getSelection().addRange(range);
         try {
             document.execCommand('copy');
-            alert("Scoreboard copied to clipboard!");
+            alert("Scoreboard copied to clipboard! You can paste it into Excel or Email.");
         } catch(err) {
             alert("Failed to copy table.");
         }
@@ -434,7 +427,9 @@ const boardPage = (flags) => `
     const pauseTimer = () => {
         const endTime = parseInt(localStorage.getItem('timerEndTime'), 10);
         const remainingTime = endTime - new Date().getTime();
-        if (remainingTime > 0) localStorage.setItem('pausedTime', remainingTime);
+        if (remainingTime > 0) {
+            localStorage.setItem('pausedTime', remainingTime);
+        }
         localStorage.removeItem('timerEndTime');
         window.location.reload();
     };
@@ -465,6 +460,7 @@ const boardPage = (flags) => `
         startBtn.disabled = true;
         pauseResumeBtn.textContent = 'Pause Timer';
         pauseResumeBtn.className = 'control-btn pause-btn';
+        pauseResumeBtn.disabled = false;
         pauseResumeBtn.addEventListener('click', pauseTimer);
         const endTime = parseInt(storedEndTime, 10);
         const updateDisplay = () => {
@@ -486,6 +482,7 @@ const boardPage = (flags) => `
         startBtn.disabled = true;
         pauseResumeBtn.textContent = 'Resume Timer';
         pauseResumeBtn.className = 'control-btn resume-btn';
+        pauseResumeBtn.disabled = false;
         pauseResumeBtn.addEventListener('click', resumeTimer);
         const remaining = parseInt(storedPausedTime, 10);
         const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
@@ -493,18 +490,17 @@ const boardPage = (flags) => `
         timerDisplay.textContent = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
     } else {
         startBtn.disabled = false;
+        pauseResumeBtn.textContent = 'Pause/Resume';
         pauseResumeBtn.disabled = true;
         startBtn.addEventListener('click', startInitialCountdown);
     }
-
-    closeBtn.addEventListener("click", () => { winnerAnnouncer.style.display = 'none'; });
+    closeBtn.addEventListener("click", () => {
+        winnerAnnouncer.style.display = 'none';
+    });
   </script>
 </html>
 `;
 
-/**
- * resetPage returns a response body as a string.
- */
 const resetPage = `
 <!DOCTYPE html>
 <html lang="en">
@@ -519,7 +515,7 @@ const resetPage = `
       <div class="subcontainer">
         <h2>Reset!</h2>
       </div>
-      </div>
+     </div>
   </body>
   <script>
     var reset = (confirmation) => {
@@ -531,15 +527,21 @@ const resetPage = `
         localStorage.removeItem('autoRefresh');
         fetch("/reset", { method: "POST", body: confirmation })
         .then((response) => {
-          if (!response.ok) alert("HTTP Error " + response.status);
-          else window.location.href = "/board";
+          if (!response.ok) {
+            alert("HTTP Error " + response.status + ". Please try again.");
+          } else {
+            window.location.href = "/board";
+          }
         })
-      } else alert("Please enter RESETMADDUCK in all caps.");
+      } else {
+        alert("Please enter RESETMADDUCK in all caps.")
+      }
     }
-    document.querySelector("h2").addEventListener("click", () => {
+    var requestConfirmation = (_event) => {
       let confirmation = prompt("Please enter RESETMADDUCK to reset the scoreboard:");
-      reset(confirmation);
-    });
+      reset(confirmation)
+    }
+    document.querySelector("h2").addEventListener("click", requestConfirmation)
   </script>
 </html>
 `;
@@ -569,8 +571,15 @@ async function getFlag(request, env) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   const flag = await env.FLAGS.get(id?.toString(), { type: "json" });
-  if (flag === null) return new Response("Not Found 🦆", { status: 404 });
-  return new Response(flagPage(flag), { headers: { "Content-Type": "text/html" } });
+  if (flag === null) {
+    return new Response("The requested resource could not be found 🦆", {
+      status: 404,
+    });
+  }
+  const body = flagPage(flag);
+  return new Response(body, {
+    headers: { "Content-Type": "text/html" },
+  });
 }
 
 async function captureFlag(request, env) {
@@ -579,35 +588,59 @@ async function captureFlag(request, env) {
     const id = searchParams.get("id");
     const json = await request.json();
     const contract = json?.contract;
-    if (!id || !contract) return new Response("Missing ID or contract.", { status: 400 });
+    if (!id || !contract) {
+      return new Response("Missing flag ID or contract.", { status: 400 });
+    }
     const flag = await env.FLAGS.get(id, { type: "json" });
-    if (!flag) return new Response("Flag not found.", { status: 404 });
+    if (!flag) {
+      return new Response("Flag not found in KV store.", { status: 404 });
+    }
     let winner = flag.winner ? flag.winner : await check(contract, id, env);
-    await env.FLAGS.put(id, JSON.stringify({
+    await env.FLAGS.put(
+      id,
+      JSON.stringify({
         name: flag.name,
         times: flag.times.concat(new Date().toTimeString().split(" ")[0]),
         contracts: flag.contracts.concat(contract),
         points: flag.points,
         winner: winner,
-    }));
+      })
+    );
     return new Response(null, { status: 200 });
-  } catch (err) { return new Response("Error: " + err.toString(), { status: 500 }); }
+  } catch (err) {
+    return new Response("Error: " + err.toString(), { status: 500 });
+  }
 }
 
 async function check(contract, id, env) {
   const flag = await env.FLAGS.get(id, { type: "json" });
-  const redExp = new RegExp(`Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
-  const blueExp = new RegExp(`Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`, "i");
-  if (redExp.test(contract)) return "red," + flag.contracts.length;
-  if (blueExp.test(contract)) return "blue," + flag.contracts.length;
-  return null;
+  const redExp = new RegExp(
+    `Red HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
+    "i"
+  );
+  const blueExp = new RegExp(
+    `Blue HQ(,|\\s)[\\S\\s]*?(,|\\s)Touchdown ${flag.name}`,
+    "i"
+  );
+  if (redExp.test(contract)) {
+    return "red," + flag.contracts.length;
+  } else if (blueExp.test(contract)) {
+    return "blue," + flag.contracts.length;
+  } else {
+    return null;
+  }
 }
 
 async function getBoard(env) {
   const promises = [];
-  for (const key of Array(18).keys()) promises.push(env.FLAGS.get((key + 1).toString(), { type: "json" }));
+  for (const key of Array(18).keys()) {
+    promises.push(env.FLAGS.get((key + 1).toString(), { type: "json" }));
+  }
   const data = await Promise.all(promises);
-  return new Response(boardPage(JSON.stringify(data)), { headers: { "Content-Type": "text/html" } });
+  const body = boardPage(JSON.stringify(data));
+  return new Response(body, {
+    headers: { "Content-Type": "text/html" },
+  });
 }
 
 async function resetBoard(request, env) {
@@ -617,27 +650,47 @@ async function resetBoard(request, env) {
       await resetGameData(env);
       return new Response(null, { status: 200 });
     }
-  } else return new Response(resetPage, { headers: { "Content-Type": "text/html" } });
+  } else {
+    return new Response(resetPage, {
+      headers: { "Content-Type": "text/html" },
+    });
+  }
 }
 
 async function confirmContract() {
-  return new Response("Contract received 💬", { status: 200, headers: { "Clear-Site-Data": "*" } });
+  return new Response("Contract received 💬", {
+    status: 200,
+    headers: { "Clear-Site-Data": "*" },
+  });
 }
 
 async function handleRequest(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname;
   switch (path) {
-    case "/flag": return getFlag(request, env);
-    case "/capture": return captureFlag(request, env);
-    case "/board": return getBoard(env);
-    case "/reset": return resetBoard(request, env);
-    case "/confirm": return confirmContract();
-    default: return new Response("Not Found 🦆", { status: 404 });
+    case "/flag":
+      return getFlag(request, env);
+    case "/capture":
+      return captureFlag(request, env);
+    case "/board":
+      return getBoard(env);
+    case "/reset":
+      return resetBoard(request, env);
+    case "/confirm":
+      return confirmContract();
+    default:
+      return new Response("The requested resource could not be found 🦆", {
+        status: 404,
+      });
   }
 }
 
 export default {
-  async fetch(request, env, ctx) { return handleRequest(request, env, ctx); },
-  async scheduled(event, env, ctx) { await resetGameData(env); }
+  async fetch(request, env, ctx) {
+    return handleRequest(request, env, ctx);
+  },
+  async scheduled(event, env, ctx) {
+    await resetGameData(env);
+    console.log("Automated Midnight Reset Complete");
+  }
 }
