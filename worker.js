@@ -299,7 +299,7 @@ const boardPage = (flags) => `
           const cells = [name, contracts, red, blue];
           cells.forEach(cell => {
               cell.style.backgroundColor = winningTeamColor;
-              cell.style.color = 'white'; // CHANGE: Set text color to white
+              cell.style.color = 'white';
               cell.style.fontWeight = 'bold';
           });
         }
@@ -307,7 +307,7 @@ const boardPage = (flags) => `
       for (let i = 0; i < flag.contracts.length; i++) {
         const timeAndContract = flag.times[i] + 'Z - ' + escapeHtml(flag.contracts[i]);
         if (i === winningContractID) {
-          contracts.innerHTML += '<strong>' + timeAndContract + '</strong><br>';
+          contracts.innerHTML += '<strong style="font-size: 1.25em;">' + timeAndContract + '</strong><br>';
         } else {
           contracts.innerHTML += '<em>' + timeAndContract + '</em><br>';
         }
@@ -325,8 +325,10 @@ const boardPage = (flags) => `
     
     if (redSum > blueSum) {
         redSumCell.classList.add('leader-red');
+        redSumCell.style.color = 'white';
     } else if (blueSum > redSum) {
         blueSumCell.classList.add('leader-blue');
+        blueSumCell.style.color = 'white';
     }
     const revealChargersBtn = document.querySelector("#revealChargersBtn");
     const revealRavensBtn = document.querySelector("#revealRavensBtn");
@@ -361,7 +363,7 @@ const boardPage = (flags) => `
     resetRavensBtn.addEventListener('click', () => { localStorage.removeItem('ravensRevealed'); window.location.reload(); });
     const autoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false';
     if (autoRefreshEnabled) {
-        setTimeout(() => window.location.reload(), 5000); // CHANGE: Refresh rate set to 5 seconds
+        setTimeout(() => window.location.reload(), 5000);
         toggleRefreshBtn.textContent = 'Auto-Refresh: On';
         toggleRefreshBtn.className = 'control-btn refresh-btn-on';
     } else {
